@@ -34,11 +34,3 @@ CREATE INDEX ON "accounts" ("lifter");
 CREATE INDEX ON "exersise" ("name");
 
 CREATE INDEX ON "lift" ("weight");
-
---ALTER TABLE "exersise" ADD FOREIGN KEY ("muscle_group") REFERENCES "muscle_groups" ("name") ON DELETE CASCADE;
-
---ALTER TABLE "lift" ADD FOREIGN KEY ("exersise") REFERENCES "exersise" ("name") ON DELETE CASCADE;
-
---ALTER TABLE "lift" ADD FOREIGN KEY ("muscle_group") REFERENCES "muscle_groups" ("name") ON DELETE CASCADE;
-
---ALTER TABLE "lift" ADD FOREIGN KEY ("user_id") REFERENCES "accounts" ("id") ON DELETE CASCADE;
