@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS lift;
+DROP TABLE IF EXISTS exersise;
+DROP TABLE IF EXISTS muscle_groups;
+DROP TABLE IF EXISTS accounts;
