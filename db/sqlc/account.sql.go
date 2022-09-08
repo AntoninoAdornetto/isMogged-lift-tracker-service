@@ -8,23 +8,25 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (
   lifter,
-  age,
+  birth_date,
   weight,
   start_date
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id, lifter, age, weight, start_date
+RETURNING id, lifter, birth_date, weight, start_date
 `
 
 type CreateAccountParams struct {
 	Lifter    string    `json:"lifter"`
-	Age       int32     `json:"age"`
+	BirthDate time.Time `json:"birth_date"`
 	Weight    int32     `json:"weight"`
 	StartDate time.Time `json:"start_date"`
 }
@@ -32,7 +34,7 @@ type CreateAccountParams struct {
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
 	row := q.db.QueryRowContext(ctx, createAccount,
 		arg.Lifter,
-		arg.Age,
+		arg.BirthDate,
 		arg.Weight,
 		arg.StartDate,
 	)
@@ -40,9 +42,93 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	err := row.Scan(
 		&i.ID,
 		&i.Lifter,
-		&i.Age,
+		&i.BirthDate,
 		&i.Weight,
 		&i.StartDate,
 	)
 	return i, err
+}
+
+const deleteAccount = `-- name: DeleteAccount :exec
+DELETE FROM accounts WHERE id = $1
+`
+
+func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteAccount, id)
+	return err
+}
+
+const getAccount = `-- name: GetAccount :one
+SELECT id, lifter, birth_date, weight, start_date FROM accounts
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Lifter,
+		&i.BirthDate,
+		&i.Weight,
+		&i.StartDate,
+	)
+	return i, err
+}
+
+const listAccounts = `-- name: ListAccounts :many
+SELECT id, lifter, birth_date, weight, start_date FROM accounts
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type ListAccountsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, listAccounts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.Lifter,
+			&i.BirthDate,
+			&i.Weight,
+			&i.StartDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAccountWeight = `-- name: UpdateAccountWeight :exec
+UPDATE accounts SET
+weight = $1 WHERE 
+id = $2
+`
+
+type UpdateAccountWeightParams struct {
+	Weight int32     `json:"weight"`
+	ID     uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateAccountWeight(ctx context.Context, arg UpdateAccountWeightParams) error {
+	_, err := q.db.ExecContext(ctx, updateAccountWeight, arg.Weight, arg.ID)
+	return err
 }

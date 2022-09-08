@@ -1,7 +1,7 @@
 -- name: CreateAccount :one
 INSERT INTO accounts (
   lifter,
-  age,
+  birth_date,
   weight,
   start_date
 ) VALUES (
@@ -18,3 +18,11 @@ SELECT * FROM accounts
 ORDER BY id
 LIMIT $1
 OFFSET $2;
+
+-- name: UpdateAccountWeight :exec
+UPDATE accounts SET
+weight = $1 WHERE 
+id = $2;
+
+-- name: DeleteAccount :exec
+DELETE FROM accounts WHERE id = $1;

@@ -13,28 +13,27 @@ import (
 type Account struct {
 	ID        uuid.UUID `json:"id"`
 	Lifter    string    `json:"lifter"`
-	Age       int32     `json:"age"`
+	BirthDate time.Time `json:"birth_date"`
 	Weight    int32     `json:"weight"`
 	StartDate time.Time `json:"start_date"`
 }
 
 type Exersise struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	MuscleGroup string `json:"muscle_group"`
+	ID           int64  `json:"id"`
+	ExersiseName string `json:"exersise_name"`
+	MuscleGroup  string `json:"muscle_group"`
 }
 
 type Lift struct {
-	ID          int64         `json:"id"`
-	Exersise    string        `json:"exersise"`
-	Weight      float32       `json:"weight"`
-	Reps        int32         `json:"reps"`
-	MuscleGroup string        `json:"muscle_group"`
-	DateLifted  time.Time     `json:"date_lifted"`
-	UserID      uuid.NullUUID `json:"user_id"`
+	ID           int64         `json:"id"`
+	ExersiseName string        `json:"exersise_name"`
+	Weight       float32       `json:"weight"`
+	Reps         int32         `json:"reps"`
+	DateLifted   time.Time     `json:"date_lifted"`
+	UserID       uuid.NullUUID `json:"user_id"`
 }
 
 type MuscleGroup struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID        int64  `json:"id"`
+	GroupName string `json:"group_name"`
 }
