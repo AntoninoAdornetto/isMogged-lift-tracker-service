@@ -18,5 +18,8 @@ migratedown:
 sqlc:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc
+pgshell:
+	docker exec -it postgres12 bash
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell
 
