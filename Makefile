@@ -10,10 +10,10 @@ dropdb:
 	docker exec -it postgres12 dropdb --username=${PG_USER} ${PG_DB}
 
 migrateup:
-	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/pump_tracker?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/pump_tracker?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}?sslmode=disable" -verbose down
 
 sqlc:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
