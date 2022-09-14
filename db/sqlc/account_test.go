@@ -12,9 +12,9 @@ import (
 
 func CreateTestAccount() Account {
 	arg := CreateAccountParams{
-		Lifter: util.RandomString(6),
+		Lifter:    util.RandomString(6),
 		BirthDate: time.Now(),
-		Weight: 190,
+		Weight:    190,
 		StartDate: time.Now(),
 	}
 
@@ -29,9 +29,9 @@ func CreateTestAccount() Account {
 
 func TestCreateAccount(t *testing.T) {
 	arg := CreateAccountParams{
-		Lifter: util.RandomString(6),
+		Lifter:    util.RandomString(6),
 		BirthDate: time.Now(),
-		Weight: 190,
+		Weight:    190,
 		StartDate: time.Now(),
 	}
 
@@ -62,13 +62,13 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	acc := CreateTestAccount() 
-	acc1 := CreateTestAccount() 
+	acc := CreateTestAccount()
+	acc1 := CreateTestAccount()
 	require.NotEmpty(t, acc)
 	require.NotEmpty(t, acc1)
 
 	accs, err := testQueries.ListAccounts(context.Background(), ListAccountsParams{
-		Limit: 2,
+		Limit:  2,
 		Offset: 0,
 	})
 
@@ -82,7 +82,7 @@ func TestUpdateAccountWeight(t *testing.T) {
 
 	testQueries.UpdateAccountWeight(context.Background(), UpdateAccountWeightParams{
 		Weight: 195,
-		ID: acc.ID,
+		ID:     acc.ID,
 	})
 
 	queryAcc, err := testQueries.GetAccount(context.Background(), acc.ID)
