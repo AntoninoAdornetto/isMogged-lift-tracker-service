@@ -78,7 +78,7 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, lifter, birth_date, weight, start_date FROM accounts
-ORDER BY id
+ORDER BY lifter
 LIMIT $1
 OFFSET $2
 `
