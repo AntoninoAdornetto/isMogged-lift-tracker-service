@@ -15,7 +15,7 @@ SELECT * FROM muscle_groups
 ORDER BY group_name;
 
 -- name: UpdateGroup :exec
-UPDATE muscle_groups SET group_name = $1;
+UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2;
 
 -- name: DeleteGroup :exec
 DELETE FROM muscle_groups WHERE group_name = $1;
