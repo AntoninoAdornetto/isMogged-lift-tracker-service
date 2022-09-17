@@ -24,5 +24,8 @@ pgshell:
 test: 
 	go test -v -cover ./...
 
+fmt:
+	go fmt ./...
+
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell
 
