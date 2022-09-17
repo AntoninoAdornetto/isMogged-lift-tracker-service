@@ -51,6 +51,33 @@ func (q *Queries) GetExersise(ctx context.Context, exersiseName string) (Exersis
 	return i, err
 }
 
+const getExersises = `-- name: GetExersises :many
+SELECT id, exersise_name, muscle_group FROM exersise
+`
+
+func (q *Queries) GetExersises(ctx context.Context) ([]Exersise, error) {
+	rows, err := q.db.QueryContext(ctx, getExersises)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Exersise
+	for rows.Next() {
+		var i Exersise
+		if err := rows.Scan(&i.ID, &i.ExersiseName, &i.MuscleGroup); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getMuscleGroupExersises = `-- name: GetMuscleGroupExersises :many
 SELECT id, exersise_name, muscle_group FROM exersise 
 WHERE muscle_group = ($1)
@@ -83,19 +110,31 @@ func (q *Queries) GetMuscleGroupExersises(ctx context.Context, muscleGroup strin
 const updateExersiseMuscleGroup = `-- name: UpdateExersiseMuscleGroup :exec
 UPDATE exersise SET
 muscle_group = ($1)
+WHERE muscle_group = ($2)
 `
 
-func (q *Queries) UpdateExersiseMuscleGroup(ctx context.Context, muscleGroup string) error {
-	_, err := q.db.ExecContext(ctx, updateExersiseMuscleGroup, muscleGroup)
+type UpdateExersiseMuscleGroupParams struct {
+	MuscleGroup   string `json:"muscle_group"`
+	MuscleGroup_2 string `json:"muscle_group_2"`
+}
+
+func (q *Queries) UpdateExersiseMuscleGroup(ctx context.Context, arg UpdateExersiseMuscleGroupParams) error {
+	_, err := q.db.ExecContext(ctx, updateExersiseMuscleGroup, arg.MuscleGroup, arg.MuscleGroup_2)
 	return err
 }
 
 const updateExersiseName = `-- name: UpdateExersiseName :exec
 UPDATE exersise SET
 exersise_name = ($1)
+WHERE exersise_name = ($2)
 `
 
-func (q *Queries) UpdateExersiseName(ctx context.Context, exersiseName string) error {
-	_, err := q.db.ExecContext(ctx, updateExersiseName, exersiseName)
+type UpdateExersiseNameParams struct {
+	ExersiseName   string `json:"exersise_name"`
+	ExersiseName_2 string `json:"exersise_name_2"`
+}
+
+func (q *Queries) UpdateExersiseName(ctx context.Context, arg UpdateExersiseNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateExersiseName, arg.ExersiseName, arg.ExersiseName_2)
 	return err
 }
