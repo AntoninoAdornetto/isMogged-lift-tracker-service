@@ -19,11 +19,11 @@ func createRandMuscleGroup(t *testing.T, n string) MuscleGroup {
 	require.NotNil(t, entry.ID)
 	require.Equal(t, args.GroupName, entry.GroupName)
 
-	return entry 
+	return entry
 }
 
 func TestCreateMuscleGroup(t *testing.T) {
-	n:= "Chest"
+	n := "Chest"
 	createRandMuscleGroup(t, "Chest")
 	testQueries.DeleteGroup(context.Background(), n)
 }
@@ -81,7 +81,7 @@ func TestUpdateMuscleGroup(t *testing.T) {
 	require.Equal(t, query.GroupName, c)
 
 	args := UpdateGroupParams{
-		GroupName: u,
+		GroupName:   u,
 		GroupName_2: c,
 	}
 

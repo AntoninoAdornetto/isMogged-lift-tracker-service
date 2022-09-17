@@ -18,7 +18,7 @@ func generateRandAccount(t *testing.T) Account {
 	}
 
 	acc, err := testQueries.CreateAccount(context.Background(), arg)
-	require.NoError(t, err) 
+	require.NoError(t, err)
 	require.NotEmpty(t, acc)
 
 	// todo - Fix Time checks
