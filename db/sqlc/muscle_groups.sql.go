@@ -75,10 +75,15 @@ func (q *Queries) GetMuscleGroups(ctx context.Context) ([]MuscleGroup, error) {
 }
 
 const updateGroup = `-- name: UpdateGroup :exec
-UPDATE muscle_groups SET group_name = $1
+UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2
 `
 
-func (q *Queries) UpdateGroup(ctx context.Context, groupName string) error {
-	_, err := q.db.ExecContext(ctx, updateGroup, groupName)
+type UpdateGroupParams struct {
+	GroupName   string `json:"group_name"`
+	GroupName_2 string `json:"group_name_2"`
+}
+
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) error {
+	_, err := q.db.ExecContext(ctx, updateGroup, arg.GroupName, arg.GroupName_2)
 	return err
 }
