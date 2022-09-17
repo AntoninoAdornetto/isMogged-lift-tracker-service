@@ -63,7 +63,7 @@ func TestGetMuscleGroups(t *testing.T) {
 
 	query, err := testQueries.GetMuscleGroups(context.Background())
 	require.NoError(t, err)
-	require.Len(t, query, 3)
+	require.GreaterOrEqual(t, len(query), 3)
 
 	testQueries.DeleteGroup(context.Background(), c)
 	testQueries.DeleteGroup(context.Background(), s)
