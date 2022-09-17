@@ -21,5 +21,8 @@ sqlc:
 pgshell:
 	docker exec -it postgres12 bash
 
+test: 
+	go test -v -cover ./...
+
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell
 
