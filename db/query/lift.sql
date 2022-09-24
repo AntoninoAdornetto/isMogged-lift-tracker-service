@@ -13,12 +13,12 @@ RETURNING *;
 SELECT * FROM lift 
 WHERE id = $1 LIMIT 1;
 
--- name: GetLargeWeightLifts :many
+-- name: GetWeightPRs :many
 SELECT * FROM lift 
 WHERE user_id = $1
 ORDER BY weight;
 
--- name: GetHighRepLifts :many
+-- name: GetRepPRs :many
 SELECT * FROM lift 
 WHERE user_id = $1
 ORDER BY reps;
