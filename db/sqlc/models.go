@@ -25,12 +25,12 @@ type Exersise struct {
 }
 
 type Lift struct {
-	ID           int64         `json:"id"`
-	ExersiseName string        `json:"exersise_name"`
-	Weight       float32       `json:"weight"`
-	Reps         int32         `json:"reps"`
-	DateLifted   time.Time     `json:"date_lifted"`
-	UserID       uuid.NullUUID `json:"user_id"`
+	ID           int64     `json:"id"`
+	ExersiseName string    `json:"exersise_name"`
+	Weight       float32   `json:"weight"`
+	Reps         int32     `json:"reps"`
+	DateLifted   time.Time `json:"date_lifted"`
+	UserID       uuid.UUID `json:"user_id"`
 }
 
 type MuscleGroup struct {
