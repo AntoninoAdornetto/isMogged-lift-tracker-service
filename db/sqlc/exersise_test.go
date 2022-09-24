@@ -56,6 +56,8 @@ func TestGetExersise(t *testing.T) {
 	query, err := testQueries.GetExersise(context.Background(), ex.ExersiseName)
 	require.NoError(t, err)
 	require.NotEmpty(t, query.ExersiseName)
+
+	testQueries.DeleteExersise(context.Background(), ex.ExersiseName)
 }
 
 func TestGetExersises(t *testing.T) {
