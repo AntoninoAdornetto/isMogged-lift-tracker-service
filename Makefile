@@ -24,6 +24,9 @@ pgshell:
 test: 
 	go test -v -cover ./...
 
+ctest:
+	go clean -testcache && go test -v -cover ./...
+
 fmt:
 	go fmt ./...
 
