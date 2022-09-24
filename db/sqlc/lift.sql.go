@@ -24,10 +24,10 @@ RETURNING id, exersise_name, weight, reps, date_lifted, user_id
 `
 
 type CreateLiftParams struct {
-	ExersiseName string        `json:"exersise_name"`
-	Weight       float32       `json:"weight"`
-	Reps         int32         `json:"reps"`
-	UserID       uuid.NullUUID `json:"user_id"`
+	ExersiseName string    `json:"exersise_name"`
+	Weight       float32   `json:"weight"`
+	Reps         int32     `json:"reps"`
+	UserID       uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) CreateLift(ctx context.Context, arg CreateLiftParams) (Lift, error) {
@@ -58,78 +58,6 @@ func (q *Queries) DeleteLift(ctx context.Context, id int64) error {
 	return err
 }
 
-const getHighRepLifts = `-- name: GetHighRepLifts :many
-SELECT id, exersise_name, weight, reps, date_lifted, user_id FROM lift 
-WHERE user_id = $1
-ORDER BY reps
-`
-
-func (q *Queries) GetHighRepLifts(ctx context.Context, userID uuid.NullUUID) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, getHighRepLifts, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Lift
-	for rows.Next() {
-		var i Lift
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExersiseName,
-			&i.Weight,
-			&i.Reps,
-			&i.DateLifted,
-			&i.UserID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getLargeWeightLifts = `-- name: GetLargeWeightLifts :many
-SELECT id, exersise_name, weight, reps, date_lifted, user_id FROM lift 
-WHERE user_id = $1
-ORDER BY weight
-`
-
-func (q *Queries) GetLargeWeightLifts(ctx context.Context, userID uuid.NullUUID) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, getLargeWeightLifts, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Lift
-	for rows.Next() {
-		var i Lift
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExersiseName,
-			&i.Weight,
-			&i.Reps,
-			&i.DateLifted,
-			&i.UserID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getLift = `-- name: GetLift :one
 SELECT id, exersise_name, weight, reps, date_lifted, user_id FROM lift 
 WHERE id = $1 LIMIT 1
@@ -149,6 +77,78 @@ func (q *Queries) GetLift(ctx context.Context, id int64) (Lift, error) {
 	return i, err
 }
 
+const getRepPRs = `-- name: GetRepPRs :many
+SELECT id, exersise_name, weight, reps, date_lifted, user_id FROM lift 
+WHERE user_id = $1
+ORDER BY reps
+`
+
+func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, getRepPRs, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Lift
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExersiseName,
+			&i.Weight,
+			&i.Reps,
+			&i.DateLifted,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getWeightPRs = `-- name: GetWeightPRs :many
+SELECT id, exersise_name, weight, reps, date_lifted, user_id FROM lift 
+WHERE user_id = $1
+ORDER BY weight
+`
+
+func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, getWeightPRs, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Lift
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExersiseName,
+			&i.Weight,
+			&i.Reps,
+			&i.DateLifted,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateReps = `-- name: UpdateReps :exec
 UPDATE lift SET
 reps = $1
@@ -157,9 +157,9 @@ user_id = $3
 `
 
 type UpdateRepsParams struct {
-	Reps   int32         `json:"reps"`
-	ID     int64         `json:"id"`
-	UserID uuid.NullUUID `json:"user_id"`
+	Reps   int32     `json:"reps"`
+	ID     int64     `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) error {
@@ -175,9 +175,9 @@ user_id = $3
 `
 
 type UpdateWeightParams struct {
-	Weight float32       `json:"weight"`
-	ID     int64         `json:"id"`
-	UserID uuid.NullUUID `json:"user_id"`
+	Weight float32   `json:"weight"`
+	ID     int64     `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) UpdateWeight(ctx context.Context, arg UpdateWeightParams) error {
