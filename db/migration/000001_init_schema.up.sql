@@ -25,7 +25,7 @@ CREATE TABLE "lift" (
   "weight" real NOT NULL,
   "reps" int NOT NULL,
   "date_lifted" timestamp NOT NULL DEFAULT NOW(),
-  "user_id" uuid  REFERENCES accounts(id) ON DELETE CASCADE
+  "user_id" uuid NOT NULL  REFERENCES accounts(id) ON DELETE CASCADE
 );
 
 CREATE INDEX ON "accounts" ("lifter");
