@@ -10,13 +10,13 @@ import (
 
 const MG = "TestGroup"
 
-func createRandomExersise(t *testing.T) Exersise {
+func CreateRandomExersise(t *testing.T) Exersise {
 	en := util.RandomString(4)
 
 	query, err := testQueries.GetMuscleGroup(context.Background(), MG)
 
 	if err != nil {
-		createRandMuscleGroup(t, MG)
+		CreateRandMuscleGroup(t, MG)
 	}
 
 	require.NotNil(t, query.GroupName)
@@ -36,12 +36,12 @@ func createRandomExersise(t *testing.T) Exersise {
 }
 
 func TestCreateExersise(t *testing.T) {
-	ex := createRandomExersise(t)
+	ex := CreateRandomExersise(t)
 	testQueries.DeleteExersise(context.Background(), ex.ExersiseName)
 }
 
 func TestDeleteExersise(t *testing.T) {
-	ex := createRandomExersise(t)
+	ex := CreateRandomExersise(t)
 
 	testQueries.DeleteExersise(context.Background(), ex.ExersiseName)
 
@@ -51,7 +51,7 @@ func TestDeleteExersise(t *testing.T) {
 }
 
 func TestGetExersise(t *testing.T) {
-	ex := createRandomExersise(t)
+	ex := CreateRandomExersise(t)
 
 	query, err := testQueries.GetExersise(context.Background(), ex.ExersiseName)
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestGetExersise(t *testing.T) {
 
 func TestGetExersises(t *testing.T) {
 	for i := 0; i < 5; i++ {
-		createRandomExersise(t)
+		CreateRandomExersise(t)
 	}
 
 	entries, err := testQueries.GetExersises(context.Background())
@@ -76,7 +76,7 @@ func TestGetExersises(t *testing.T) {
 
 func TestGetMuscleGroupExersises(t *testing.T) {
 	for i := 0; i < 5; i++ {
-		createRandomExersise(t)
+		CreateRandomExersise(t)
 	}
 
 	entries, err := testQueries.GetMuscleGroupExersises(context.Background(), MG)
@@ -89,8 +89,8 @@ func TestGetMuscleGroupExersises(t *testing.T) {
 }
 
 func TestUpdateExersiseMuscleGroup(t *testing.T) {
-	newMG := createRandMuscleGroup(t, "NewGroup")
-	ex := createRandomExersise(t)
+	newMG := CreateRandMuscleGroup(t, "NewGroup")
+	ex := CreateRandomExersise(t)
 
 	args := UpdateExersiseMuscleGroupParams{
 		MuscleGroup:   newMG.GroupName,
@@ -109,7 +109,7 @@ func TestUpdateExersiseMuscleGroup(t *testing.T) {
 
 func TestUpdateExersiseName(t *testing.T) {
 	newEx := "Peck Deck"
-	ex := createRandomExersise(t)
+	ex := CreateRandomExersise(t)
 
 	args := UpdateExersiseNameParams{
 		ExersiseName:   newEx,
