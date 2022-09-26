@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func generateRandAccount(t *testing.T) Account {
+func GenerateRandAccount(t *testing.T) Account {
 	arg := CreateAccountParams{
 		Lifter:    util.RandomString(6),
 		BirthDate: time.Now(),
@@ -32,18 +32,18 @@ func generateRandAccount(t *testing.T) Account {
 }
 
 func TestCreateAccount(t *testing.T) {
-	acc := generateRandAccount(t)
+	acc := GenerateRandAccount(t)
 	testQueries.DeleteAccount(context.Background(), acc.ID)
 }
 
 func TestDeleteAccount(t *testing.T) {
-	arg := generateRandAccount(t)
+	arg := GenerateRandAccount(t)
 	acc := testQueries.DeleteAccount(context.Background(), arg.ID)
 	require.Empty(t, acc)
 }
 
 func TestGetAccount(t *testing.T) {
-	arg := generateRandAccount(t)
+	arg := GenerateRandAccount(t)
 	queryAcc, err := testQueries.GetAccount(context.Background(), arg.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, queryAcc)
@@ -51,8 +51,8 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	acc := generateRandAccount(t)
-	acc1 := generateRandAccount(t)
+	acc := GenerateRandAccount(t)
+	acc1 := GenerateRandAccount(t)
 	require.NotEmpty(t, acc)
 	require.NotEmpty(t, acc1)
 
@@ -69,7 +69,7 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestUpdateAccountWeight(t *testing.T) {
-	acc := generateRandAccount(t)
+	acc := GenerateRandAccount(t)
 	require.NotEmpty(t, acc)
 
 	testQueries.UpdateAccountWeight(context.Background(), UpdateAccountWeightParams{
