@@ -19,13 +19,18 @@ CREATE TABLE "exersise" (
   "muscle_group" varchar NOT NULL REFERENCES muscle_groups(group_name) ON DELETE CASCADE
 );
 
+CREATE TABLE "set" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
 CREATE TABLE "lift" (
   "id" bigserial PRIMARY KEY,
   "exersise_name" varchar NOT NULL REFERENCES exersise(exersise_name) ON DELETE CASCADE,
   "weight" real NOT NULL,
   "reps" int NOT NULL,
   "date_lifted" timestamp NOT NULL DEFAULT NOW(),
-  "user_id" uuid NOT NULL  REFERENCES accounts(id) ON DELETE CASCADE
+  "user_id" uuid NOT NULL  REFERENCES accounts(id) ON DELETE CASCADE,
+  "set_id" uuid NOT NULL REFERENCES set(id) ON DELETE CASCADE
 );
 
 CREATE INDEX ON "accounts" ("lifter");
