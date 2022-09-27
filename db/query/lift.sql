@@ -3,9 +3,10 @@ INSERT INTO lift (
   exersise_name,
   weight,
   reps,
-  user_id
+  user_id,
+  set_id
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5
 )
 RETURNING *;
 
