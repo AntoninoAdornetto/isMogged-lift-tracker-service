@@ -31,9 +31,14 @@ type Lift struct {
 	Reps         int32     `json:"reps"`
 	DateLifted   time.Time `json:"date_lifted"`
 	UserID       uuid.UUID `json:"user_id"`
+	SetID        uuid.UUID `json:"set_id"`
 }
 
 type MuscleGroup struct {
 	ID        int64  `json:"id"`
 	GroupName string `json:"group_name"`
+}
+
+type Set struct {
+	ID uuid.UUID `json:"id"`
 }
