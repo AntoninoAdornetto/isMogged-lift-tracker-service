@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandMuscleGroup(t *testing.T, n string) MuscleGroup {
+func CreateRandMuscleGroup(t *testing.T, n string) MuscleGroup {
 	args := MuscleGroup{
 		GroupName: n,
 	}
@@ -24,13 +24,13 @@ func createRandMuscleGroup(t *testing.T, n string) MuscleGroup {
 
 func TestCreateMuscleGroup(t *testing.T) {
 	n := "Chest"
-	createRandMuscleGroup(t, "Chest")
+	CreateRandMuscleGroup(t, "Chest")
 	testQueries.DeleteGroup(context.Background(), n)
 }
 
 func TestDeleteMuscleGroup(t *testing.T) {
 	n := "Back"
-	mg := createRandMuscleGroup(t, n)
+	mg := CreateRandMuscleGroup(t, n)
 	require.NotNil(t, mg.GroupName)
 
 	testQueries.DeleteGroup(context.Background(), n)
@@ -42,7 +42,7 @@ func TestDeleteMuscleGroup(t *testing.T) {
 
 func TestGetMuscleGroup(t *testing.T) {
 	n := "Shoulders"
-	mg := createRandMuscleGroup(t, n)
+	mg := CreateRandMuscleGroup(t, n)
 	require.NotNil(t, mg.GroupName)
 
 	query, err := testQueries.GetMuscleGroup(context.Background(), n)
@@ -57,9 +57,9 @@ func TestGetMuscleGroups(t *testing.T) {
 	s := "Shoulders"
 	l := "Legs"
 
-	createRandMuscleGroup(t, c)
-	createRandMuscleGroup(t, s)
-	createRandMuscleGroup(t, l)
+	CreateRandMuscleGroup(t, c)
+	CreateRandMuscleGroup(t, s)
+	CreateRandMuscleGroup(t, l)
 
 	query, err := testQueries.GetMuscleGroups(context.Background())
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestUpdateMuscleGroup(t *testing.T) {
 	c := "triceps"
 	u := "Triceps"
 
-	createRandMuscleGroup(t, c)
+	CreateRandMuscleGroup(t, c)
 
 	query, err := testQueries.GetMuscleGroup(context.Background(), c)
 	require.NoError(t, err)
