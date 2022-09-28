@@ -5,27 +5,39 @@ import (
 	"testing"
 
 	"github.com/AntoninoAdornetto/lift_tracker/util"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 var acc Account
+var set uuid.UUID
+var isSetCreated = false 
 
-func createRandomLift(t *testing.T) Lift {
+func CreateRandomLift(t *testing.T) Lift {
 	if acc.Lifter == "" {
-		acc = generateRandAccount(t)
+		acc = GenerateRandAccount(t)
 	}
-	en := createRandomExersise(t)
+
+	if isSetCreated == false {
+		set = CreateRandomSet(t)
+		isSetCreated = true
+	}
+
+	en := CreateRandomExersise(t)
 
 	arg := CreateLiftParams{
 		ExersiseName: en.ExersiseName,
 		Weight:       float32(util.RandomInt(100, 200)),
 		Reps:         int32(util.RandomInt(6, 12)),
 		UserID:       acc.ID,
+		SetID: set,
 	}
 
 	l, err := testQueries.CreateLift(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotNil(t, l.ID)
+	require.NotNil(t, l.SetID)
+	require.NotNil(t, l.UserID)
 	require.NotNil(t, l.UserID)
 	require.NotNil(t, l.Reps)
 	require.NotNil(t, l.Weight)
@@ -36,11 +48,11 @@ func createRandomLift(t *testing.T) Lift {
 }
 
 func TestCreateLift(t *testing.T) {
-	createRandomLift(t)
+	CreateRandomLift(t)
 }
 
 func TestGetLift(t *testing.T) {
-	l := createRandomLift(t)
+	l := CreateRandomLift(t)
 
 	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
@@ -48,7 +60,7 @@ func TestGetLift(t *testing.T) {
 }
 
 func TestDeleteLift(t *testing.T) {
-	l := createRandomLift(t)
+	l := CreateRandomLift(t)
 
 	testQueries.DeleteLift(context.Background(), l.ID)
 
@@ -58,8 +70,8 @@ func TestDeleteLift(t *testing.T) {
 }
 
 func TestGetRepPRs(t *testing.T) {
-	newAcc := generateRandAccount(t)
-	mg := createRandMuscleGroup(t, "Chesticles")
+	newAcc := GenerateRandAccount(t)
+	mg := CreateRandMuscleGroup(t, "Chesticles")
 	ex, err := testQueries.CreateExersise(context.Background(), CreateExersiseParams{
 		ExersiseName: "Bench Press",
 		MuscleGroup:  mg.GroupName,
@@ -75,6 +87,7 @@ func TestGetRepPRs(t *testing.T) {
 			Weight:       float32(util.RandomInt(100, 200)),
 			Reps:         int32(i + 1),
 			UserID:       newAcc.ID,
+			SetID: set,
 		})
 	}
 
@@ -91,8 +104,8 @@ func TestGetRepPRs(t *testing.T) {
 }
 
 func TestGetWeightPRs(t *testing.T) {
-	newAcc := generateRandAccount(t)
-	mg := createRandMuscleGroup(t, "Chesticles")
+	newAcc := GenerateRandAccount(t)
+	mg := CreateRandMuscleGroup(t, "Chesticles")
 	ex, err := testQueries.CreateExersise(context.Background(), CreateExersiseParams{
 		ExersiseName: "Bench Press",
 		MuscleGroup:  mg.GroupName,
@@ -108,6 +121,7 @@ func TestGetWeightPRs(t *testing.T) {
 			Weight:       float32(i) * 2.3,
 			Reps:         int32(util.RandomInt(6, 12)),
 			UserID:       newAcc.ID,
+			SetID: set,
 		})
 	}
 
@@ -124,7 +138,7 @@ func TestGetWeightPRs(t *testing.T) {
 }
 
 func TestUpdateReps(t *testing.T) {
-	l := createRandomLift(t)
+	l := CreateRandomLift(t)
 
 	args := UpdateRepsParams{
 		Reps:   l.Reps - 1,
@@ -140,7 +154,7 @@ func TestUpdateReps(t *testing.T) {
 }
 
 func TestUpdateWeight(t *testing.T) {
-	l := createRandomLift(t)
+	l := CreateRandomLift(t)
 
 	args := UpdateWeightParams{
 		Weight: l.Weight - 1,
