@@ -11,7 +11,7 @@ import (
 
 var acc Account
 var set uuid.UUID
-var isSetCreated = false 
+var isSetCreated = false
 
 func CreateRandomLift(t *testing.T) Lift {
 	if acc.Lifter == "" {
@@ -30,7 +30,7 @@ func CreateRandomLift(t *testing.T) Lift {
 		Weight:       float32(util.RandomInt(100, 200)),
 		Reps:         int32(util.RandomInt(6, 12)),
 		UserID:       acc.ID,
-		SetID: set,
+		SetID:        set,
 	}
 
 	l, err := testQueries.CreateLift(context.Background(), arg)
@@ -87,7 +87,7 @@ func TestGetRepPRs(t *testing.T) {
 			Weight:       float32(util.RandomInt(100, 200)),
 			Reps:         int32(i + 1),
 			UserID:       newAcc.ID,
-			SetID: set,
+			SetID:        set,
 		})
 	}
 
@@ -121,7 +121,7 @@ func TestGetWeightPRs(t *testing.T) {
 			Weight:       float32(i) * 2.3,
 			Reps:         int32(util.RandomInt(6, 12)),
 			UserID:       newAcc.ID,
-			SetID: set,
+			SetID:        set,
 		})
 	}
 
