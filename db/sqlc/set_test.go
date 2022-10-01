@@ -73,6 +73,7 @@ func TestGetLiftSets(t *testing.T) {
 	}
 
 	require.GreaterOrEqual(t, len(args), 3)
-
 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
+	testQueries.DeleteAccount(context.Background(), acc.ID)
+	testQueries.DeleteSet(context.Background(), s)
 }

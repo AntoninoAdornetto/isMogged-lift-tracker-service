@@ -13,6 +13,12 @@ var acc Account
 var set uuid.UUID
 var isSetCreated = false
 
+func cleanUpLift() {
+	testQueries.DeleteAccount(context.Background(), acc.ID)
+	testQueries.DeleteSet(context.Background(), set)
+	isSetCreated = false
+}
+
 func CreateRandomLift(t *testing.T) Lift {
 	if acc.Lifter == "" {
 		acc = GenerateRandAccount(t)
@@ -167,4 +173,5 @@ func TestUpdateWeight(t *testing.T) {
 	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
 	require.Equal(t, l.Weight-1, query.Weight)
+	cleanUpLift()
 }

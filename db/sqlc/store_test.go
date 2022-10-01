@@ -21,6 +21,7 @@ func TestCreateNewLift(t *testing.T) {
 	results := make(chan CreateNewLiftRes)
 
 	for i := 0; i < n; i++ {
+
 		go func() {
 			res, err := store.CreateNewLift(context.Background(), CreateNewLiftReq{
 				ExersiseName: ex.ExersiseName,
@@ -46,6 +47,5 @@ func TestCreateNewLift(t *testing.T) {
 		require.Equal(t, acc.ID, res.Lift.UserID)
 		require.NotNil(t, res.SetId)
 	}
-
 	store.DeleteAccount(context.Background(), acc.ID)
 }
