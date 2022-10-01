@@ -1,19 +1,17 @@
-include .env
-
 postgres:
-	docker run --name postgres12 -e POSTGRES_PASSWORD=${PG_PASS} -d -p 5432:5432 ${PG_USER} 
+	docker run --name postgres12 -e POSTGRES_PASSWORD=tempPassword -d -p 5432:5432 postgres 
 
 createdb:
-	docker exec -it postgres12 createdb --username=${PG_USER} --owner=${PG_USER} ${PG_DB}
+	docker exec -it postgres12 createdb --username=postgres --owner=postgres lift_tracker
 
 dropdb:
-	docker exec -it postgres12 dropdb --username=${PG_USER} ${PG_DB}
+	docker exec -it postgres12 dropdb --username=postgres lift_tracker
 
 migrateup:
-	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose down
 
 sqlc:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
