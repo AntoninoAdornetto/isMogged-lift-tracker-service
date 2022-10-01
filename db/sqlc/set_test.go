@@ -34,7 +34,7 @@ func TestGetLiftSets(t *testing.T) {
 
 	exersiseArgs := CreateExersiseParams{
 		ExersiseName: "Chest-Press-Test",
-		MuscleGroup: mg.GroupName,
+		MuscleGroup:  mg.GroupName,
 	}
 
 	ex, err := testQueries.CreateExersise(context.Background(), exersiseArgs)
@@ -45,11 +45,11 @@ func TestGetLiftSets(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		liftArgs := CreateLiftParams{
-		ExersiseName: ex.ExersiseName,
-		Weight: float32(100 + i),
-		Reps: int32(i + 1),
-		UserID: acc.ID,
-		SetID: s,
+			ExersiseName: ex.ExersiseName,
+			Weight:       float32(100 + i),
+			Reps:         int32(i + 1),
+			UserID:       acc.ID,
+			SetID:        s,
 		}
 
 		l, err := testQueries.CreateLift(context.Background(), liftArgs)
@@ -73,6 +73,7 @@ func TestGetLiftSets(t *testing.T) {
 	}
 
 	require.GreaterOrEqual(t, len(args), 3)
-
 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
+	testQueries.DeleteAccount(context.Background(), acc.ID)
+	testQueries.DeleteSet(context.Background(), s)
 }
