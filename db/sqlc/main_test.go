@@ -11,7 +11,7 @@ import (
 
 const (
 	dbDriver = "postgres"
-	dbSource = "postgresql://postgres:thisIsdatBizness05@localhost:5432/lift_tracker?sslmode=disable"
+	dbSource = "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable"
 )
 
 var testQueries *Queries
