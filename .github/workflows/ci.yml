@@ -19,6 +19,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: tempPassword
           POSTGRES_DB: lift_tracker
+          POSTGRES_EXTENSIONS: uuid-ossp
         ports:
           - 5432:5432
         options: >-
