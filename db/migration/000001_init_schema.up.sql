@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE "accounts" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   "lifter" varchar NOT NULL,
   "birth_date" date NOT NULL,
   "weight" int NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE "exersise" (
 );
 
 CREATE TABLE "set" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4()
 );
 
 CREATE TABLE "lift" (
