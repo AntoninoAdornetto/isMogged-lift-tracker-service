@@ -2,10 +2,9 @@
 INSERT INTO accounts (
   lifter,
   birth_date,
-  weight,
-  start_date
+  weight
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3
 )
 RETURNING *;
 

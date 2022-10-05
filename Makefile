@@ -28,5 +28,8 @@ ctest:
 fmt:
 	go fmt ./...
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell
+run-dev:
+	go run main.go
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev 
 

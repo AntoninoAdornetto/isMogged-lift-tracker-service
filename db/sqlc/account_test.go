@@ -14,7 +14,6 @@ func GenerateRandAccount(t *testing.T) Account {
 		Lifter:    util.RandomString(6),
 		BirthDate: time.Now(),
 		Weight:    190,
-		StartDate: time.Now(),
 	}
 
 	acc, err := testQueries.CreateAccount(context.Background(), arg)
@@ -25,7 +24,7 @@ func GenerateRandAccount(t *testing.T) Account {
 	require.Equal(t, arg.Lifter, acc.Lifter)
 	require.Equal(t, arg.BirthDate.Year(), acc.BirthDate.Year())
 	require.Equal(t, arg.Weight, acc.Weight)
-	require.Equal(t, arg.StartDate.Year(), acc.StartDate.Year())
+	require.NotEmpty(t, acc.StartDate)
 	require.NotEmpty(t, acc.ID)
 
 	return acc

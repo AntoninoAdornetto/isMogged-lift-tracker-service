@@ -16,10 +16,9 @@ const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (
   lifter,
   birth_date,
-  weight,
-  start_date
+  weight
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3
 )
 RETURNING id, lifter, birth_date, weight, start_date
 `
@@ -28,16 +27,10 @@ type CreateAccountParams struct {
 	Lifter    string    `json:"lifter"`
 	BirthDate time.Time `json:"birth_date"`
 	Weight    int32     `json:"weight"`
-	StartDate time.Time `json:"start_date"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount,
-		arg.Lifter,
-		arg.BirthDate,
-		arg.Weight,
-		arg.StartDate,
-	)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.Lifter, arg.BirthDate, arg.Weight)
 	var i Account
 	err := row.Scan(
 		&i.ID,
