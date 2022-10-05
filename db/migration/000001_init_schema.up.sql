@@ -5,7 +5,7 @@ CREATE TABLE "accounts" (
   "lifter" varchar NOT NULL,
   "birth_date" date NOT NULL,
   "weight" int NOT NULL,
-  "start_date" date NOT NULL
+  "start_date" date NOT NULL DEFAULT NOW() 
 );
 
 CREATE TABLE "muscle_groups" (
