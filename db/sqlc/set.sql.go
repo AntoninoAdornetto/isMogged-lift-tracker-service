@@ -52,7 +52,7 @@ func (q *Queries) GetLiftSets(ctx context.Context, id uuid.UUID) ([]GetLiftSetsR
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetLiftSetsRow
+	items := []GetLiftSetsRow{}
 	for rows.Next() {
 		var i GetLiftSetsRow
 		if err := rows.Scan(

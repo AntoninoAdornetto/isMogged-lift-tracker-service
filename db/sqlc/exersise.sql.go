@@ -61,7 +61,7 @@ func (q *Queries) GetExersises(ctx context.Context) ([]Exersise, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Exersise
+	items := []Exersise{}
 	for rows.Next() {
 		var i Exersise
 		if err := rows.Scan(&i.ID, &i.ExersiseName, &i.MuscleGroup); err != nil {
@@ -90,7 +90,7 @@ func (q *Queries) GetMuscleGroupExersises(ctx context.Context, muscleGroup strin
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Exersise
+	items := []Exersise{}
 	for rows.Next() {
 		var i Exersise
 		if err := rows.Scan(&i.ID, &i.ExersiseName, &i.MuscleGroup); err != nil {

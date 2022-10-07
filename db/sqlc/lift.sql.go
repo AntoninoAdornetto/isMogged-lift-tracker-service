@@ -94,7 +94,7 @@ func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, erro
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Lift
+	items := []Lift{}
 	for rows.Next() {
 		var i Lift
 		if err := rows.Scan(
@@ -131,7 +131,7 @@ func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, e
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Lift
+	items := []Lift{}
 	for rows.Next() {
 		var i Lift
 		if err := rows.Scan(
