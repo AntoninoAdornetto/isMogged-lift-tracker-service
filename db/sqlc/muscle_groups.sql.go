@@ -74,8 +74,8 @@ func (q *Queries) GetMuscleGroups(ctx context.Context) ([]MuscleGroup, error) {
 	return items, nil
 }
 
-const updateGroup = `-- name: UpdateGroup :exec
-UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2
+const updateGroup = `-- name: UpdateGroup :one
+UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2 RETURNING id, group_name
 `
 
 type UpdateGroupParams struct {
@@ -83,7 +83,9 @@ type UpdateGroupParams struct {
 	GroupName_2 string `json:"group_name_2"`
 }
 
-func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) error {
-	_, err := q.db.ExecContext(ctx, updateGroup, arg.GroupName, arg.GroupName_2)
-	return err
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (MuscleGroup, error) {
+	row := q.db.QueryRowContext(ctx, updateGroup, arg.GroupName, arg.GroupName_2)
+	var i MuscleGroup
+	err := row.Scan(&i.ID, &i.GroupName)
+	return i, err
 }
