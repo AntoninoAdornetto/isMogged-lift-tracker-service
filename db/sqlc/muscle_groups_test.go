@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,13 +24,13 @@ func CreateRandMuscleGroup(t *testing.T, n string) MuscleGroup {
 }
 
 func TestCreateMuscleGroup(t *testing.T) {
-	n := "Chest"
-	CreateRandMuscleGroup(t, "Chest")
+	n := util.RandomString(10)
+	CreateRandMuscleGroup(t, n)
 	testQueries.DeleteGroup(context.Background(), n)
 }
 
 func TestDeleteMuscleGroup(t *testing.T) {
-	n := "Back"
+	n := util.RandomString(10)
 	mg := CreateRandMuscleGroup(t, n)
 	require.NotNil(t, mg.GroupName)
 
@@ -41,7 +42,7 @@ func TestDeleteMuscleGroup(t *testing.T) {
 }
 
 func TestGetMuscleGroup(t *testing.T) {
-	n := "Shoulders"
+	n := util.RandomString(7)
 	mg := CreateRandMuscleGroup(t, n)
 	require.NotNil(t, mg.GroupName)
 
@@ -50,12 +51,13 @@ func TestGetMuscleGroup(t *testing.T) {
 	require.Equal(t, n, query.GroupName)
 
 	testQueries.DeleteGroup(context.Background(), n)
+	testQueries.DeleteGroup(context.Background(), mg.GroupName)
 }
 
 func TestGetMuscleGroups(t *testing.T) {
-	c := "Chest"
-	s := "Shoulders"
-	l := "Legs"
+	c := util.RandomString(5)
+	s := util.RandomString(6)
+	l := util.RandomString(7)
 
 	CreateRandMuscleGroup(t, c)
 	CreateRandMuscleGroup(t, s)
@@ -71,8 +73,8 @@ func TestGetMuscleGroups(t *testing.T) {
 }
 
 func TestUpdateMuscleGroup(t *testing.T) {
-	c := "triceps"
-	u := "Triceps"
+	c := util.RandomString(5)
+	u := util.RandomString(6)
 
 	CreateRandMuscleGroup(t, c)
 
@@ -85,10 +87,9 @@ func TestUpdateMuscleGroup(t *testing.T) {
 		GroupName_2: c,
 	}
 
-	testQueries.UpdateGroup(context.Background(), args)
-	patched, err := testQueries.GetMuscleGroup(context.Background(), u)
+	patch, err := testQueries.UpdateGroup(context.Background(), args)
 	require.NoError(t, err)
-	require.Equal(t, patched.GroupName, u)
+	require.Equal(t, patch.GroupName, u)
 
 	testQueries.DeleteGroup(context.Background(), u)
 }
