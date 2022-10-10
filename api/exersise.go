@@ -52,3 +52,49 @@ func (server *Server) getExersise(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, ex)
 }
+
+type listExersisesReq struct {
+	PageID   int32 `form:"page_id" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
+}
+
+func (server *Server) listExersises(ctx *gin.Context) {
+	var req listExersisesReq
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	args := db.ListExersisesParams{
+		Limit:  req.PageSize,
+		Offset: (req.PageID - 1) * req.PageSize,
+	}
+
+	exs, err := server.store.ListExersises(ctx, args)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, exs)
+}
+
+type getMuscleGroupExersisesReq struct {
+	MuscleGroup string `uri:"muscle_group" binding:"required"`
+}
+
+func (server *Server) getMuscleGroupExersises(ctx *gin.Context) {
+	var req getMuscleGroupExersisesReq
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	exs, err := server.store.GetMuscleGroupExersises(ctx, req.MuscleGroup)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, exs)
+}
