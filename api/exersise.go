@@ -98,3 +98,29 @@ func (server *Server) getMuscleGroupExersises(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, exs)
 }
+
+type updateExersiseNameReq struct {
+	CurrentName string `json:"current_name" binding:"required"`
+	NewName     string `json:"new_name" binding:"required"`
+}
+
+func (server *Server) updateExersiseName(ctx *gin.Context) {
+	var req updateExersiseNameReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	args := db.UpdateExersiseNameParams{
+		ExersiseName:   req.NewName,
+		ExersiseName_2: req.CurrentName,
+	}
+
+	err := server.store.UpdateExersiseName(ctx, args)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
+}
