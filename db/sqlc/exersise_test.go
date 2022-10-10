@@ -65,9 +65,14 @@ func TestGetExersises(t *testing.T) {
 		CreateRandomExersise(t)
 	}
 
-	entries, err := testQueries.GetExersises(context.Background())
+	args := ListExersisesParams{
+		Limit:  5,
+		Offset: 0,
+	}
+
+	entries, err := testQueries.ListExersises(context.Background(), args)
 	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(entries), 4)
+	require.GreaterOrEqual(t, len(entries), 5)
 
 	for i := 0; i < len(entries); i++ {
 		testQueries.DeleteExersise(context.Background(), entries[i].ExersiseName)

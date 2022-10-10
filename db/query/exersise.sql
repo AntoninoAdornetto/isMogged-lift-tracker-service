@@ -10,8 +10,11 @@ INSERT INTO exersise (
 SELECT * FROM exersise
 WHERE exersise_name = ($1) LIMIT 1;
 
--- name: GetExersises :many
-SELECT * FROM exersise;
+-- name: ListExersises :many
+SELECT * FROM exersise
+ORDER BY exersise_name
+LIMIT $1
+OFFSET $2;
 
 -- name: GetMuscleGroupExersises :many
 SELECT * FROM exersise 

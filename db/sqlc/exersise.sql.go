@@ -51,12 +51,14 @@ func (q *Queries) GetExersise(ctx context.Context, exersiseName string) (Exersis
 	return i, err
 }
 
-const getExersises = `-- name: GetExersises :many
-SELECT id, exersise_name, muscle_group FROM exersise
+const getMuscleGroupExersises = `-- name: GetMuscleGroupExersises :many
+SELECT id, exersise_name, muscle_group FROM exersise 
+WHERE muscle_group = ($1)
+ORDER BY exersise_name
 `
 
-func (q *Queries) GetExersises(ctx context.Context) ([]Exersise, error) {
-	rows, err := q.db.QueryContext(ctx, getExersises)
+func (q *Queries) GetMuscleGroupExersises(ctx context.Context, muscleGroup string) ([]Exersise, error) {
+	rows, err := q.db.QueryContext(ctx, getMuscleGroupExersises, muscleGroup)
 	if err != nil {
 		return nil, err
 	}
@@ -78,14 +80,20 @@ func (q *Queries) GetExersises(ctx context.Context) ([]Exersise, error) {
 	return items, nil
 }
 
-const getMuscleGroupExersises = `-- name: GetMuscleGroupExersises :many
-SELECT id, exersise_name, muscle_group FROM exersise 
-WHERE muscle_group = ($1)
+const listExersises = `-- name: ListExersises :many
+SELECT id, exersise_name, muscle_group FROM exersise
 ORDER BY exersise_name
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) GetMuscleGroupExersises(ctx context.Context, muscleGroup string) ([]Exersise, error) {
-	rows, err := q.db.QueryContext(ctx, getMuscleGroupExersises, muscleGroup)
+type ListExersisesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListExersises(ctx context.Context, arg ListExersisesParams) ([]Exersise, error) {
+	rows, err := q.db.QueryContext(ctx, listExersises, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
