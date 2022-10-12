@@ -150,3 +150,23 @@ func (server *Server) updateExersiseMuscleGroup(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusNoContent, nil)
 }
+
+type deleteExersiseReq struct {
+	ExersiseName string `uri:"exersise_name" binding:"required"`
+}
+
+func (server *Server) deleteExersise(ctx *gin.Context) {
+	var req deleteExersiseReq
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err := server.store.DeleteExersise(ctx, req.ExersiseName)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
+}
