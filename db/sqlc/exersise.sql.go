@@ -118,16 +118,16 @@ func (q *Queries) ListExersises(ctx context.Context, arg ListExersisesParams) ([
 const updateExersiseMuscleGroup = `-- name: UpdateExersiseMuscleGroup :exec
 UPDATE exersise SET
 muscle_group = ($1)
-WHERE muscle_group = ($2)
+WHERE exersise_name = ($2)
 `
 
 type UpdateExersiseMuscleGroupParams struct {
-	MuscleGroup   string `json:"muscle_group"`
-	MuscleGroup_2 string `json:"muscle_group_2"`
+	MuscleGroup  string `json:"muscle_group"`
+	ExersiseName string `json:"exersise_name"`
 }
 
 func (q *Queries) UpdateExersiseMuscleGroup(ctx context.Context, arg UpdateExersiseMuscleGroupParams) error {
-	_, err := q.db.ExecContext(ctx, updateExersiseMuscleGroup, arg.MuscleGroup, arg.MuscleGroup_2)
+	_, err := q.db.ExecContext(ctx, updateExersiseMuscleGroup, arg.MuscleGroup, arg.ExersiseName)
 	return err
 }
 

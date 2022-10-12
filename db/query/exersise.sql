@@ -29,7 +29,7 @@ WHERE exersise_name = ($2);
 -- name: UpdateExersiseMuscleGroup :exec
 UPDATE exersise SET
 muscle_group = ($1)
-WHERE muscle_group = ($2);
+WHERE exersise_name = ($2);
 
 -- name: DeleteExersise :exec
 DELETE FROM exersise WHERE exersise_name = ($1);

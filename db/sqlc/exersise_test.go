@@ -94,12 +94,12 @@ func TestGetMuscleGroupExersises(t *testing.T) {
 }
 
 func TestUpdateExersiseMuscleGroup(t *testing.T) {
-	newMG := CreateRandMuscleGroup(t, "NewGroup")
+	newMG := CreateRandMuscleGroup(t, "TestUpdateExersiseMG")
 	ex := CreateRandomExersise(t)
 
 	args := UpdateExersiseMuscleGroupParams{
-		MuscleGroup:   newMG.GroupName,
-		MuscleGroup_2: MG,
+		MuscleGroup:  newMG.GroupName,
+		ExersiseName: ex.ExersiseName,
 	}
 
 	testQueries.UpdateExersiseMuscleGroup(context.Background(), args)
