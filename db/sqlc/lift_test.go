@@ -29,10 +29,10 @@ func CreateRandomLift(t *testing.T) Lift {
 		isSetCreated = true
 	}
 
-	en := CreateRandomExersise(t)
+	en := CreateRandomExercise(t)
 
 	arg := CreateLiftParams{
-		ExersiseName: en.ExersiseName,
+		ExerciseName: en.ExerciseName,
 		Weight:       float32(util.RandomInt(100, 200)),
 		Reps:         int32(util.RandomInt(6, 12)),
 		UserID:       acc.ID,
@@ -78,8 +78,8 @@ func TestDeleteLift(t *testing.T) {
 func TestGetRepPRs(t *testing.T) {
 	newAcc := GenerateRandAccount(t)
 	mg := CreateRandMuscleGroup(t, "Chesticles")
-	ex, err := testQueries.CreateExersise(context.Background(), CreateExersiseParams{
-		ExersiseName: "Bench Press",
+	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		ExerciseName: "Bench Press",
 		MuscleGroup:  mg.GroupName,
 	})
 
@@ -89,7 +89,7 @@ func TestGetRepPRs(t *testing.T) {
 
 	for i := 0; i < LIFTLEN; i++ {
 		testQueries.CreateLift(context.Background(), CreateLiftParams{
-			ExersiseName: ex.ExersiseName,
+			ExerciseName: ex.ExerciseName,
 			Weight:       float32(util.RandomInt(100, 200)),
 			Reps:         int32(i + 1),
 			UserID:       newAcc.ID,
@@ -105,15 +105,15 @@ func TestGetRepPRs(t *testing.T) {
 		require.Greater(t, prs[i+1].Reps, prs[i].Reps)
 	}
 
-	testQueries.DeleteExersise(context.Background(), ex.ExersiseName)
+	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
 }
 
 func TestGetWeightPRs(t *testing.T) {
 	newAcc := GenerateRandAccount(t)
 	mg := CreateRandMuscleGroup(t, "Chesticles")
-	ex, err := testQueries.CreateExersise(context.Background(), CreateExersiseParams{
-		ExersiseName: "Bench Press",
+	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		ExerciseName: "Bench Press",
 		MuscleGroup:  mg.GroupName,
 	})
 
@@ -123,7 +123,7 @@ func TestGetWeightPRs(t *testing.T) {
 
 	for i := 0; i < LIFTLEN; i++ {
 		testQueries.CreateLift(context.Background(), CreateLiftParams{
-			ExersiseName: ex.ExersiseName,
+			ExerciseName: ex.ExerciseName,
 			Weight:       float32(i) * 2.3,
 			Reps:         int32(util.RandomInt(6, 12)),
 			UserID:       newAcc.ID,
@@ -139,7 +139,7 @@ func TestGetWeightPRs(t *testing.T) {
 		require.Greater(t, prs[i+1].Weight, prs[i].Weight)
 	}
 
-	testQueries.DeleteExersise(context.Background(), ex.ExersiseName)
+	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
 }
 

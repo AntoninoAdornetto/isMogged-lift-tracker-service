@@ -13,7 +13,7 @@ import (
 
 const createLift = `-- name: CreateLift :one
 INSERT INTO lift (
-  exersise_name,
+  exercise_name,
   weight,
   reps,
   user_id,
@@ -21,11 +21,11 @@ INSERT INTO lift (
 ) VALUES (
   $1, $2, $3, $4, $5
 )
-RETURNING id, exersise_name, weight, reps, date_lifted, user_id, set_id
+RETURNING id, exercise_name, weight, reps, date_lifted, user_id, set_id
 `
 
 type CreateLiftParams struct {
-	ExersiseName string    `json:"exersise_name"`
+	ExerciseName string    `json:"exercise_name"`
 	Weight       float32   `json:"weight"`
 	Reps         int32     `json:"reps"`
 	UserID       uuid.UUID `json:"user_id"`
@@ -34,7 +34,7 @@ type CreateLiftParams struct {
 
 func (q *Queries) CreateLift(ctx context.Context, arg CreateLiftParams) (Lift, error) {
 	row := q.db.QueryRowContext(ctx, createLift,
-		arg.ExersiseName,
+		arg.ExerciseName,
 		arg.Weight,
 		arg.Reps,
 		arg.UserID,
@@ -43,7 +43,7 @@ func (q *Queries) CreateLift(ctx context.Context, arg CreateLiftParams) (Lift, e
 	var i Lift
 	err := row.Scan(
 		&i.ID,
-		&i.ExersiseName,
+		&i.ExerciseName,
 		&i.Weight,
 		&i.Reps,
 		&i.DateLifted,
@@ -63,7 +63,7 @@ func (q *Queries) DeleteLift(ctx context.Context, id int64) error {
 }
 
 const getLift = `-- name: GetLift :one
-SELECT id, exersise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
 WHERE id = $1 LIMIT 1
 `
 
@@ -72,7 +72,7 @@ func (q *Queries) GetLift(ctx context.Context, id int64) (Lift, error) {
 	var i Lift
 	err := row.Scan(
 		&i.ID,
-		&i.ExersiseName,
+		&i.ExerciseName,
 		&i.Weight,
 		&i.Reps,
 		&i.DateLifted,
@@ -83,7 +83,7 @@ func (q *Queries) GetLift(ctx context.Context, id int64) (Lift, error) {
 }
 
 const getRepPRs = `-- name: GetRepPRs :many
-SELECT id, exersise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
 WHERE user_id = $1
 ORDER BY reps
 `
@@ -99,7 +99,7 @@ func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, erro
 		var i Lift
 		if err := rows.Scan(
 			&i.ID,
-			&i.ExersiseName,
+			&i.ExerciseName,
 			&i.Weight,
 			&i.Reps,
 			&i.DateLifted,
@@ -120,7 +120,7 @@ func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, erro
 }
 
 const getWeightPRs = `-- name: GetWeightPRs :many
-SELECT id, exersise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
 WHERE user_id = $1
 ORDER BY weight
 `
@@ -136,7 +136,7 @@ func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, e
 		var i Lift
 		if err := rows.Scan(
 			&i.ID,
-			&i.ExersiseName,
+			&i.ExerciseName,
 			&i.Weight,
 			&i.Reps,
 			&i.DateLifted,

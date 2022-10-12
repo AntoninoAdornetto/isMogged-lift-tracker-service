@@ -15,7 +15,7 @@ func TestCreateNewLift(t *testing.T) {
 
 	n := 3
 	acc := GenerateRandAccount(t)
-	ex := CreateRandomExersise(t)
+	ex := CreateRandomExercise(t)
 
 	errs := make(chan error)
 	results := make(chan CreateNewLiftRes)
@@ -24,7 +24,7 @@ func TestCreateNewLift(t *testing.T) {
 
 		go func() {
 			res, err := store.CreateNewLift(context.Background(), CreateNewLiftReq{
-				ExersiseName: ex.ExersiseName,
+				ExerciseName: ex.ExerciseName,
 				Reps:         repRange,
 				Weight:       weightRange,
 				UserID:       acc.ID,
@@ -41,7 +41,7 @@ func TestCreateNewLift(t *testing.T) {
 
 		res := <-results
 		require.NotEmpty(t, res)
-		require.Equal(t, ex.ExersiseName, res.Lift.ExersiseName)
+		require.Equal(t, ex.ExerciseName, res.Lift.ExerciseName)
 		require.Equal(t, repRange, res.Lift.Reps)
 		require.Equal(t, weightRange, res.Lift.Weight)
 		require.Equal(t, acc.ID, res.Lift.UserID)

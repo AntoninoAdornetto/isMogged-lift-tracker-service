@@ -32,12 +32,12 @@ func TestGetLiftSets(t *testing.T) {
 	acc := GenerateRandAccount(t)
 	mg := CreateRandMuscleGroup(t, "Chest-Testing-Sets")
 
-	exersiseArgs := CreateExersiseParams{
-		ExersiseName: "Chest-Press-Test",
+	exersiseArgs := CreateExerciseParams{
+		ExerciseName: "Chest-Press-Test",
 		MuscleGroup:  mg.GroupName,
 	}
 
-	ex, err := testQueries.CreateExersise(context.Background(), exersiseArgs)
+	ex, err := testQueries.CreateExercise(context.Background(), exersiseArgs)
 	require.NoError(t, err)
 	require.NotEmpty(t, ex)
 
@@ -45,7 +45,7 @@ func TestGetLiftSets(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		liftArgs := CreateLiftParams{
-			ExersiseName: ex.ExersiseName,
+			ExerciseName: ex.ExerciseName,
 			Weight:       float32(100 + i),
 			Reps:         int32(i + 1),
 			UserID:       acc.ID,
@@ -65,7 +65,7 @@ func TestGetLiftSets(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, set := range liftSets {
-		require.NotEmpty(t, set.ExersiseName)
+		require.NotEmpty(t, set.ExerciseName)
 		require.NotEmpty(t, set.Weight)
 		require.NotEmpty(t, set.Reps)
 		require.NotEmpty(t, set.DateLifted)
