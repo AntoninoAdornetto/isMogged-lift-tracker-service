@@ -124,3 +124,29 @@ func (server *Server) updateExersiseName(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusNoContent, nil)
 }
+
+type updateExersiseMuscleGroupReq struct {
+	MuscleGroup  string `json:"muscle_group" binding:"required"`
+	ExersiseName string `json:"exersise_name" binding:"required"`
+}
+
+func (server *Server) updateExersiseMuscleGroup(ctx *gin.Context) {
+	var req updateExersiseMuscleGroupReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	args := db.UpdateExersiseMuscleGroupParams{
+		MuscleGroup:  req.MuscleGroup,
+		ExersiseName: req.ExersiseName,
+	}
+
+	err := server.store.UpdateExersiseMuscleGroup(ctx, args)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
+}
