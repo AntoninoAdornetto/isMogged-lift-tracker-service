@@ -34,12 +34,12 @@ func (q *Queries) DeleteSet(ctx context.Context, id uuid.UUID) error {
 }
 
 const getLiftSets = `-- name: GetLiftSets :many
-SELECT exersise_name, weight, reps, date_lifted, set_id
+SELECT exercise_name, weight, reps, date_lifted, set_id
 FROM set JOIN lift ON set.id = lift.set_id WHERE set.id = $1
 `
 
 type GetLiftSetsRow struct {
-	ExersiseName string    `json:"exersise_name"`
+	ExerciseName string    `json:"exercise_name"`
 	Weight       float32   `json:"weight"`
 	Reps         int32     `json:"reps"`
 	DateLifted   time.Time `json:"date_lifted"`
@@ -56,7 +56,7 @@ func (q *Queries) GetLiftSets(ctx context.Context, id uuid.UUID) ([]GetLiftSetsR
 	for rows.Next() {
 		var i GetLiftSetsRow
 		if err := rows.Scan(
-			&i.ExersiseName,
+			&i.ExerciseName,
 			&i.Weight,
 			&i.Reps,
 			&i.DateLifted,

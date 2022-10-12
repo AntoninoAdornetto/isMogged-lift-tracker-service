@@ -18,15 +18,15 @@ type Account struct {
 	StartDate time.Time `json:"start_date"`
 }
 
-type Exersise struct {
+type Exercise struct {
 	ID           int64  `json:"id"`
-	ExersiseName string `json:"exersise_name"`
+	ExerciseName string `json:"exercise_name"`
 	MuscleGroup  string `json:"muscle_group"`
 }
 
 type Lift struct {
 	ID           int64     `json:"id"`
-	ExersiseName string    `json:"exersise_name"`
+	ExerciseName string    `json:"exercise_name"`
 	Weight       float32   `json:"weight"`
 	Reps         int32     `json:"reps"`
 	DateLifted   time.Time `json:"date_lifted"`

@@ -24,13 +24,13 @@ func NewServer(store *db.Store) *Server {
 	router.PATCH("muscle_group", server.updateMuscleGroup)
 	router.DELETE("/muscle_group/:group_name", server.deleteMuscleGroup)
 
-	router.POST("/exersise", server.createExersise)
-	router.GET("/exersise/:exersise_name", server.getExersise)
-	router.GET("/exersise", server.listExersises)
-	router.GET("/exersise/group/:muscle_group", server.getMuscleGroupExersises)
-	router.PATCH("/exersise/name", server.updateExersiseName)
-	router.PATCH("/exersise/group", server.updateExersiseMuscleGroup)
-	router.DELETE("/exersise/:exersise_name", server.deleteExersise)
+	router.POST("/exercise", server.createExercise)
+	router.GET("/exercise/:exercise_name", server.getExercise)
+	router.GET("/exercise", server.listExercises)
+	router.GET("/exercise/group/:muscle_group", server.getMuscleGroupExercises)
+	router.PATCH("/exercise/name", server.updateExerciseName)
+	router.PATCH("/exercise/group", server.updateExerciseMuscleGroup)
+	router.DELETE("/exercise/:exercise_name", server.deleteExercise)
 
 	server.router = router
 	return server

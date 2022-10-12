@@ -1,6 +1,6 @@
 -- name: CreateLift :one
 INSERT INTO lift (
-  exersise_name,
+  exercise_name,
   weight,
   reps,
   user_id,

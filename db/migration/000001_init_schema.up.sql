@@ -13,9 +13,9 @@ CREATE TABLE "muscle_groups" (
   "group_name" varchar UNIQUE NOT NULL 
 );
 
-CREATE TABLE "exersise" (
+CREATE TABLE "exercise" (
   "id" bigserial PRIMARY KEY,
-  "exersise_name" varchar NOT NULL UNIQUE,
+  "exercise_name" varchar NOT NULL UNIQUE,
   "muscle_group" varchar NOT NULL REFERENCES muscle_groups(group_name) ON DELETE CASCADE
 );
 
@@ -25,7 +25,7 @@ CREATE TABLE "set" (
 
 CREATE TABLE "lift" (
   "id" bigserial PRIMARY KEY,
-  "exersise_name" varchar NOT NULL REFERENCES exersise(exersise_name) ON DELETE CASCADE,
+  "exercise_name" varchar NOT NULL REFERENCES exercise(exercise_name) ON DELETE CASCADE,
   "weight" real NOT NULL,
   "reps" int NOT NULL,
   "date_lifted" timestamp NOT NULL DEFAULT NOW(),
@@ -35,6 +35,6 @@ CREATE TABLE "lift" (
 
 CREATE INDEX ON "accounts" ("lifter");
 
-CREATE INDEX ON "exersise" ("exersise_name");
+CREATE INDEX ON "exercise" ("exercise_name");
 
 CREATE INDEX ON "lift" ("weight");

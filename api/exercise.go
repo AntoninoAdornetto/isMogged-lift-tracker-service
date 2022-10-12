@@ -7,24 +7,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type createExersiseReq struct {
-	ExersiseName string `json:"exersise_name" binding:"required,min=3"`
+type createExerciseReq struct {
+	ExerciseName string `json:"exercise_name" binding:"required,min=3"`
 	MuscleGroup  string `json:"muscle_group" binding:"required,min=3"`
 }
 
-func (server *Server) createExersise(ctx *gin.Context) {
-	var req createExersiseReq
+func (server *Server) createExercise(ctx *gin.Context) {
+	var req createExerciseReq
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	arg := db.CreateExersiseParams{
-		ExersiseName: req.ExersiseName,
+	arg := db.CreateExerciseParams{
+		ExerciseName: req.ExerciseName,
 		MuscleGroup:  req.MuscleGroup,
 	}
 
-	ex, err := server.store.CreateExersise(ctx, arg)
+	ex, err := server.store.CreateExercise(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -33,18 +33,18 @@ func (server *Server) createExersise(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ex)
 }
 
-type getExersiseReq struct {
-	ExersiseName string `uri:"exersise_name" binding:"required"`
+type getExerciseReq struct {
+	ExerciseName string `uri:"exercise_name" binding:"required"`
 }
 
-func (server *Server) getExersise(ctx *gin.Context) {
-	var req getExersiseReq
+func (server *Server) getExercise(ctx *gin.Context) {
+	var req getExerciseReq
 	if err := ctx.BindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	ex, err := server.store.GetExersise(ctx, req.ExersiseName)
+	ex, err := server.store.GetExercise(ctx, req.ExerciseName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -53,24 +53,24 @@ func (server *Server) getExersise(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ex)
 }
 
-type listExersisesReq struct {
+type listExercisesReq struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
 }
 
-func (server *Server) listExersises(ctx *gin.Context) {
-	var req listExersisesReq
+func (server *Server) listExercises(ctx *gin.Context) {
+	var req listExercisesReq
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := db.ListExersisesParams{
+	args := db.ListExercisesParams{
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
 
-	exs, err := server.store.ListExersises(ctx, args)
+	exs, err := server.store.ListExercises(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -79,18 +79,18 @@ func (server *Server) listExersises(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, exs)
 }
 
-type getMuscleGroupExersisesReq struct {
+type getMuscleGroupExercisesReq struct {
 	MuscleGroup string `uri:"muscle_group" binding:"required"`
 }
 
-func (server *Server) getMuscleGroupExersises(ctx *gin.Context) {
-	var req getMuscleGroupExersisesReq
+func (server *Server) getMuscleGroupExercises(ctx *gin.Context) {
+	var req getMuscleGroupExercisesReq
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	exs, err := server.store.GetMuscleGroupExersises(ctx, req.MuscleGroup)
+	exs, err := server.store.GetMuscleGroupExercises(ctx, req.MuscleGroup)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -99,24 +99,24 @@ func (server *Server) getMuscleGroupExersises(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, exs)
 }
 
-type updateExersiseNameReq struct {
+type updateExerciseNameReq struct {
 	CurrentName string `json:"current_name" binding:"required"`
 	NewName     string `json:"new_name" binding:"required"`
 }
 
-func (server *Server) updateExersiseName(ctx *gin.Context) {
-	var req updateExersiseNameReq
+func (server *Server) updateExerciseName(ctx *gin.Context) {
+	var req updateExerciseNameReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := db.UpdateExersiseNameParams{
-		ExersiseName:   req.NewName,
-		ExersiseName_2: req.CurrentName,
+	args := db.UpdateExerciseNameParams{
+		ExerciseName:   req.NewName,
+		ExerciseName_2: req.CurrentName,
 	}
 
-	err := server.store.UpdateExersiseName(ctx, args)
+	err := server.store.UpdateExerciseName(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -125,24 +125,24 @@ func (server *Server) updateExersiseName(ctx *gin.Context) {
 	ctx.JSON(http.StatusNoContent, nil)
 }
 
-type updateExersiseMuscleGroupReq struct {
+type updateExerciseMuscleGroupReq struct {
 	MuscleGroup  string `json:"muscle_group" binding:"required"`
-	ExersiseName string `json:"exersise_name" binding:"required"`
+	ExerciseName string `json:"exercise_name" binding:"required"`
 }
 
-func (server *Server) updateExersiseMuscleGroup(ctx *gin.Context) {
-	var req updateExersiseMuscleGroupReq
+func (server *Server) updateExerciseMuscleGroup(ctx *gin.Context) {
+	var req updateExerciseMuscleGroupReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := db.UpdateExersiseMuscleGroupParams{
+	args := db.UpdateExerciseMuscleGroupParams{
 		MuscleGroup:  req.MuscleGroup,
-		ExersiseName: req.ExersiseName,
+		ExerciseName: req.ExerciseName,
 	}
 
-	err := server.store.UpdateExersiseMuscleGroup(ctx, args)
+	err := server.store.UpdateExerciseMuscleGroup(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -151,18 +151,18 @@ func (server *Server) updateExersiseMuscleGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusNoContent, nil)
 }
 
-type deleteExersiseReq struct {
-	ExersiseName string `uri:"exersise_name" binding:"required"`
+type deleteExerciseReq struct {
+	ExerciseName string `uri:"exercise_name" binding:"required"`
 }
 
-func (server *Server) deleteExersise(ctx *gin.Context) {
-	var req deleteExersiseReq
+func (server *Server) deleteExercise(ctx *gin.Context) {
+	var req deleteExerciseReq
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	err := server.store.DeleteExersise(ctx, req.ExersiseName)
+	err := server.store.DeleteExercise(ctx, req.ExerciseName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

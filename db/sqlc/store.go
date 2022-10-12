@@ -39,7 +39,7 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 }
 
 type CreateNewLiftReq struct {
-	ExersiseName string    `json:"exersise_name"`
+	ExerciseName string    `json:"exersise_name"`
 	Weight       float32   `json:"weight"`
 	Reps         int32     `json:"reps"`
 	UserID       uuid.UUID `json:"user_id"`
@@ -63,7 +63,7 @@ func (store *Store) CreateNewLift(ctx context.Context, args CreateNewLiftReq) (C
 		}
 
 		res.Lift, err = q.CreateLift(ctx, CreateLiftParams{
-			ExersiseName: args.ExersiseName,
+			ExerciseName: args.ExerciseName,
 			Weight:       args.Weight,
 			Reps:         args.Reps,
 			SetID:        res.SetId,
