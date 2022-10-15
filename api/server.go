@@ -32,6 +32,8 @@ func NewServer(store *db.Store) *Server {
 	router.PATCH("/exercise/group", server.updateExerciseMuscleGroup)
 	router.DELETE("/exercise/:exercise_name", server.deleteExercise)
 
+	router.POST("/lift", server.createLift)
+
 	server.router = router
 	return server
 }
