@@ -33,6 +33,7 @@ func NewServer(store *db.Store) *Server {
 	router.DELETE("/exercise/:exercise_name", server.deleteExercise)
 
 	router.POST("/lift", server.createLift)
+	router.GET("/lift/:id", server.getLift)
 
 	server.router = router
 	return server
