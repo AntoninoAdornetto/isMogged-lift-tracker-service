@@ -34,6 +34,7 @@ func NewServer(store *db.Store) *Server {
 
 	router.POST("/lift", server.createLift)
 	router.GET("/lift/:id", server.getLift)
+	router.GET("/lift", server.listLifts)
 
 	server.router = router
 	return server
