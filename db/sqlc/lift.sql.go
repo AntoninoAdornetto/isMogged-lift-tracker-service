@@ -156,6 +156,51 @@ func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, e
 	return items, nil
 }
 
+const listLifts = `-- name: ListLifts :many
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
+WHERE user_id = $1
+ORDER BY id 
+LIMIT $2
+OFFSET $3
+`
+
+type ListLiftsParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
+
+func (q *Queries) ListLifts(ctx context.Context, arg ListLiftsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, listLifts, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Lift{}
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExerciseName,
+			&i.Weight,
+			&i.Reps,
+			&i.DateLifted,
+			&i.UserID,
+			&i.SetID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateReps = `-- name: UpdateReps :exec
 UPDATE lift SET
 reps = $1

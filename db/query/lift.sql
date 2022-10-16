@@ -14,6 +14,13 @@ RETURNING *;
 SELECT * FROM lift 
 WHERE id = $1 LIMIT 1;
 
+-- name: ListLifts :many
+SELECT * FROM lift
+WHERE user_id = $1
+ORDER BY id 
+LIMIT $2
+OFFSET $3;
+
 -- name: GetWeightPRs :many
 SELECT * FROM lift 
 WHERE user_id = $1
