@@ -120,43 +120,6 @@ func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, erro
 	return items, nil
 }
 
-const getWeightPRs = `-- name: GetWeightPRs :many
-SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
-WHERE user_id = $1
-ORDER BY weight
-`
-
-func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, getWeightPRs, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Lift{}
-	for rows.Next() {
-		var i Lift
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExerciseName,
-			&i.Weight,
-			&i.Reps,
-			&i.DateLifted,
-			&i.UserID,
-			&i.SetID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listLifts = `-- name: ListLifts :many
 SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
 WHERE user_id = $1
@@ -274,19 +237,25 @@ func (q *Queries) ListMuscleGroupPRs(ctx context.Context, arg ListMuscleGroupPRs
 const listNamedLiftWeightPRs = `-- name: ListNamedLiftWeightPRs :many
 SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
 WHERE user_id = $1 AND exercise_name = $2
-ORDER BY weight
-LIMIT $2
-OFFSET $3
+ORDER BY weight DESC
+LIMIT $3
+OFFSET $4
 `
 
 type ListNamedLiftWeightPRsParams struct {
-	UserID uuid.UUID `json:"user_id"`
-	Limit  int32     `json:"limit"`
-	Offset int32     `json:"offset"`
+	UserID       uuid.UUID `json:"user_id"`
+	ExerciseName string    `json:"exercise_name"`
+	Limit        int32     `json:"limit"`
+	Offset       int32     `json:"offset"`
 }
 
 func (q *Queries) ListNamedLiftWeightPRs(ctx context.Context, arg ListNamedLiftWeightPRsParams) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, listNamedLiftWeightPRs, arg.UserID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listNamedLiftWeightPRs,
+		arg.UserID,
+		arg.ExerciseName,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +288,7 @@ func (q *Queries) ListNamedLiftWeightPRs(ctx context.Context, arg ListNamedLiftW
 const listWeightPRLifts = `-- name: ListWeightPRLifts :many
 SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
 WHERE user_id = $1
-ORDER BY weight
+ORDER BY weight DESC
 LIMIT $2
 OFFSET $3
 `
