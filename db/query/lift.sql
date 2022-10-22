@@ -24,16 +24,16 @@ OFFSET $3;
 -- name: ListWeightPRLifts :many
 SELECT * FROM lift
 WHERE user_id = $1
-ORDER BY weight
+ORDER BY weight DESC
 LIMIT $2
 OFFSET $3;
 
 -- name: ListNamedLiftWeightPRs :many
 SELECT * FROM lift
 WHERE user_id = $1 AND exercise_name = $2
-ORDER BY weight
-LIMIT $2
-OFFSET $3;
+ORDER BY weight DESC
+LIMIT $3
+OFFSET $4;
 
 -- name: ListMuscleGroupPRs :many
 SELECT * FROM lift as l
@@ -43,11 +43,6 @@ AND l.user_id = $2
 ORDER BY weight DESC
 LIMIT $3
 OFFSET $4;
-
--- name: GetWeightPRs :many
-SELECT * FROM lift 
-WHERE user_id = $1
-ORDER BY weight;
 
 -- name: GetRepPRs :many
 SELECT * FROM lift 
