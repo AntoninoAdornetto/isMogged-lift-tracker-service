@@ -35,6 +35,8 @@ func NewServer(store *db.Store) *Server {
 	router.POST("/lift", server.createLift)
 	router.GET("/lift/:id", server.getLift)
 	router.GET("/lift", server.listLifts)
+	router.GET("/lift/pr/weight", server.listWeightPRs)
+	router.GET("/lift/pr/:exercise_name", server.listNamedLiftWeightPRs)
 
 	server.router = router
 	return server
