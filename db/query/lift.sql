@@ -36,8 +36,8 @@ LIMIT $3
 OFFSET $4;
 
 -- name: ListMuscleGroupPRs :many
-SELECT * FROM lift as l
-JOIN exercise as ex ON l.exercise_name = ex.exercise_name
+SELECT l.id, l.exercise_name, weight, reps, ex.muscle_group, date_lifted FROM lift as l
+JOIN exercise AS ex on l.exercise_name = ex.exercise_name 
 WHERE ex.muscle_group = $1
 AND l.user_id = $2
 ORDER BY weight DESC
