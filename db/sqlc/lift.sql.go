@@ -330,6 +330,35 @@ func (q *Queries) ListWeightPRLifts(ctx context.Context, arg ListWeightPRLiftsPa
 	return items, nil
 }
 
+const updateLiftWeight = `-- name: UpdateLiftWeight :one
+UPDATE lift SET
+weight = $1
+WHERE id = $2 AND
+user_id = $3
+RETURNING id, exercise_name, weight, reps, date_lifted, user_id, set_id
+`
+
+type UpdateLiftWeightParams struct {
+	Weight float32   `json:"weight"`
+	ID     int64     `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) UpdateLiftWeight(ctx context.Context, arg UpdateLiftWeightParams) (Lift, error) {
+	row := q.db.QueryRowContext(ctx, updateLiftWeight, arg.Weight, arg.ID, arg.UserID)
+	var i Lift
+	err := row.Scan(
+		&i.ID,
+		&i.ExerciseName,
+		&i.Weight,
+		&i.Reps,
+		&i.DateLifted,
+		&i.UserID,
+		&i.SetID,
+	)
+	return i, err
+}
+
 const updateReps = `-- name: UpdateReps :exec
 UPDATE lift SET
 reps = $1
@@ -345,23 +374,5 @@ type UpdateRepsParams struct {
 
 func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) error {
 	_, err := q.db.ExecContext(ctx, updateReps, arg.Reps, arg.ID, arg.UserID)
-	return err
-}
-
-const updateWeight = `-- name: UpdateWeight :exec
-UPDATE lift SET
-weight = $1
-WHERE id = $2 AND
-user_id = $3
-`
-
-type UpdateWeightParams struct {
-	Weight float32   `json:"weight"`
-	ID     int64     `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-}
-
-func (q *Queries) UpdateWeight(ctx context.Context, arg UpdateWeightParams) error {
-	_, err := q.db.ExecContext(ctx, updateWeight, arg.Weight, arg.ID, arg.UserID)
 	return err
 }
