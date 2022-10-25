@@ -44,10 +44,12 @@ ORDER BY weight DESC
 LIMIT $3
 OFFSET $4;
 
--- name: GetRepPRs :many
+-- name: ListRepPRs :many
 SELECT * FROM lift 
 WHERE user_id = $1
-ORDER BY reps;
+ORDER BY reps DESC
+LIMIT $2
+OFFSET $3;
 
 -- name: UpdateWeight :exec
 UPDATE lift SET
