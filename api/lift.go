@@ -147,13 +147,6 @@ func (server *Server) listWeightPRs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-// -- name: ListNamedLiftWeightPRs :many
-// SELECT * FROM lift
-// WHERE user_id = $1 AND exercise_name = $2
-// ORDER BY weight DESC
-// LIMIT $2
-// OFFSET $3;
-
 type listNamedLiftWeightPRReq struct {
 	ExerciseName string `uri:"exercise_name" binding:"required"`
 }
