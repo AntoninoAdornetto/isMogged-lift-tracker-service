@@ -193,13 +193,13 @@ func (server *Server) listNamedLiftWeightPRs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-type ListMuscleGroupPRsReq struct {
+type listMuscleGroupPRsReq struct {
 	MuscleGroup string `uri:"muscle_group" binding:"required"`
 }
 
 func (server *Server) ListMuscleGroupPRs(ctx *gin.Context) {
 	var acc liftUserId
-	var req ListMuscleGroupPRsReq
+	var req listMuscleGroupPRsReq
 	var pagination liftPaginationReq
 
 	if err := ctx.BindUri(&req); err != nil {
@@ -233,6 +233,41 @@ func (server *Server) ListMuscleGroupPRs(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, error(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, lifts)
+}
+
+func (server *Server) listRepPRs(ctx *gin.Context) {
+	var acc liftUserId
+	var pagination liftPaginationReq
+
+	if err := ctx.BindJSON(&acc); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.BindQuery(&pagination); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userId, err := util.ParseUUIDStr(acc.UserId, ctx)
+	if err != nil {
+		return
+	}
+
+	args := db.ListRepPRsParams{
+		UserID: userId,
+		Limit:  pagination.PageSize,
+		Offset: (pagination.PageID - 1) * pagination.PageSize,
+	}
+
+	lifts, err := server.store.ListRepPRs(ctx, args)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
