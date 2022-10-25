@@ -162,16 +162,16 @@ func TestUpdateReps(t *testing.T) {
 	require.Equal(t, l.Reps-1, query.Reps)
 }
 
-func TestUpdateWeight(t *testing.T) {
+func TestUpdateLiftWeight(t *testing.T) {
 	l := CreateRandomLift(t)
 
-	args := UpdateWeightParams{
+	args := UpdateLiftWeightParams{
 		Weight: l.Weight - 1,
 		ID:     l.ID,
 		UserID: l.UserID,
 	}
 
-	testQueries.UpdateWeight(context.Background(), args)
+	testQueries.UpdateLiftWeight(context.Background(), args)
 
 	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
