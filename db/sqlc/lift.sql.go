@@ -166,8 +166,8 @@ func (q *Queries) ListLifts(ctx context.Context, arg ListLiftsParams) ([]Lift, e
 }
 
 const listMuscleGroupPRs = `-- name: ListMuscleGroupPRs :many
-SELECT l.id, l.exercise_name, weight, reps, date_lifted, user_id, set_id, ex.id, ex.exercise_name, muscle_group FROM lift as l
-JOIN exercise as ex ON l.exercise_name = ex.exercise_name
+SELECT l.id, l.exercise_name, weight, reps, ex.muscle_group, date_lifted FROM lift as l
+JOIN exercise AS ex on l.exercise_name = ex.exercise_name 
 WHERE ex.muscle_group = $1
 AND l.user_id = $2
 ORDER BY weight DESC
@@ -183,16 +183,12 @@ type ListMuscleGroupPRsParams struct {
 }
 
 type ListMuscleGroupPRsRow struct {
-	ID             int64     `json:"id"`
-	ExerciseName   string    `json:"exercise_name"`
-	Weight         float32   `json:"weight"`
-	Reps           int32     `json:"reps"`
-	DateLifted     time.Time `json:"date_lifted"`
-	UserID         uuid.UUID `json:"user_id"`
-	SetID          uuid.UUID `json:"set_id"`
-	ID_2           int64     `json:"id_2"`
-	ExerciseName_2 string    `json:"exercise_name_2"`
-	MuscleGroup    string    `json:"muscle_group"`
+	ID           int64     `json:"id"`
+	ExerciseName string    `json:"exercise_name"`
+	Weight       float32   `json:"weight"`
+	Reps         int32     `json:"reps"`
+	MuscleGroup  string    `json:"muscle_group"`
+	DateLifted   time.Time `json:"date_lifted"`
 }
 
 func (q *Queries) ListMuscleGroupPRs(ctx context.Context, arg ListMuscleGroupPRsParams) ([]ListMuscleGroupPRsRow, error) {
@@ -214,12 +210,8 @@ func (q *Queries) ListMuscleGroupPRs(ctx context.Context, arg ListMuscleGroupPRs
 			&i.ExerciseName,
 			&i.Weight,
 			&i.Reps,
-			&i.DateLifted,
-			&i.UserID,
-			&i.SetID,
-			&i.ID_2,
-			&i.ExerciseName_2,
 			&i.MuscleGroup,
+			&i.DateLifted,
 		); err != nil {
 			return nil, err
 		}
