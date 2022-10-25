@@ -51,11 +51,12 @@ ORDER BY reps DESC
 LIMIT $2
 OFFSET $3;
 
--- name: UpdateWeight :exec
+-- name: UpdateLiftWeight :one
 UPDATE lift SET
 weight = $1
 WHERE id = $2 AND
-user_id = $3;
+user_id = $3
+RETURNING *;
 
 -- name: UpdateReps :exec
 UPDATE lift SET
