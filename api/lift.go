@@ -362,3 +362,28 @@ func (server *Server) updateReps(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, patch)
 }
+
+func (server *Server) deleteLift(ctx *gin.Context) {
+	var lift getLiftReq
+
+	if err := ctx.BindUri(&lift); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	query, err := server.store.GetLift(ctx, lift.ID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	server.store.DeleteLift(ctx, query.ID)
+
+	ctx.JSON(http.StatusNoContent, nil)
+}
