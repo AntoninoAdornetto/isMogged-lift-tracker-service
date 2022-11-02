@@ -318,3 +318,47 @@ func (server *Server) updateLiftWeight(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, patch)
 }
+
+type updateRepsReq struct {
+	Reps   int32  `json:"reps" binding:"required"`
+	UserID string `json:"user_id" binding:"required"`
+}
+
+func (server *Server) updateReps(ctx *gin.Context) {
+	var req updateRepsReq
+	var lift getLiftReq
+
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.BindUri(&lift); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userId, err := util.ParseUUIDStr(req.UserID, ctx)
+	if err != nil {
+		return
+	}
+
+	args := db.UpdateRepsParams{
+		Reps:   req.Reps,
+		UserID: userId,
+		ID:     lift.ID,
+	}
+
+	patch, err := server.store.UpdateReps(ctx, args)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, patch)
+}
