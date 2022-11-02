@@ -359,11 +359,12 @@ func (q *Queries) UpdateLiftWeight(ctx context.Context, arg UpdateLiftWeightPara
 	return i, err
 }
 
-const updateReps = `-- name: UpdateReps :exec
+const updateReps = `-- name: UpdateReps :one
 UPDATE lift SET
 reps = $1
 WHERE id = $2 AND
 user_id = $3
+RETURNING id, exercise_name, weight, reps, date_lifted, user_id, set_id
 `
 
 type UpdateRepsParams struct {
@@ -372,7 +373,17 @@ type UpdateRepsParams struct {
 	UserID uuid.UUID `json:"user_id"`
 }
 
-func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) error {
-	_, err := q.db.ExecContext(ctx, updateReps, arg.Reps, arg.ID, arg.UserID)
-	return err
+func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) (Lift, error) {
+	row := q.db.QueryRowContext(ctx, updateReps, arg.Reps, arg.ID, arg.UserID)
+	var i Lift
+	err := row.Scan(
+		&i.ID,
+		&i.ExerciseName,
+		&i.Weight,
+		&i.Reps,
+		&i.DateLifted,
+		&i.UserID,
+		&i.SetID,
+	)
+	return i, err
 }
