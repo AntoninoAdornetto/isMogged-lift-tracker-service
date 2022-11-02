@@ -41,6 +41,7 @@ func NewServer(store *db.Store) *Server {
 	router.GET("/lift/pr/reps", server.listRepPRs)
 	router.PATCH("/lift/:id/weight", server.updateLiftWeight)
 	router.PATCH("/lift/:id/reps", server.updateReps)
+	router.DELETE("/lift/:id", server.deleteLift)
 
 	server.router = router
 	return server
