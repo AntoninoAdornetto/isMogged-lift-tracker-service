@@ -58,11 +58,12 @@ WHERE id = $2 AND
 user_id = $3
 RETURNING *;
 
--- name: UpdateReps :exec
+-- name: UpdateReps :one
 UPDATE lift SET
 reps = $1
 WHERE id = $2 AND
-user_id = $3;
+user_id = $3
+RETURNING *;
 
 -- name: DeleteLift :exec
 DELETE FROM lift WHERE id = $1;
