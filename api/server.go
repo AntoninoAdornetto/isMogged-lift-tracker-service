@@ -40,6 +40,7 @@ func NewServer(store *db.Store) *Server {
 	router.GET("/lift/pr/group/:muscle_group", server.ListMuscleGroupPRs)
 	router.GET("/lift/pr/reps", server.listRepPRs)
 	router.PATCH("/lift/:id/weight", server.updateLiftWeight)
+	router.PATCH("/lift/:id/reps", server.updateReps)
 
 	server.router = router
 	return server
