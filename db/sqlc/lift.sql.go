@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -82,14 +83,22 @@ func (q *Queries) GetLift(ctx context.Context, id int64) (Lift, error) {
 	return i, err
 }
 
-const getRepPRs = `-- name: GetRepPRs :many
-SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
+const listLifts = `-- name: ListLifts :many
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
 WHERE user_id = $1
-ORDER BY reps
+ORDER BY id 
+LIMIT $2
+OFFSET $3
 `
 
-func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, getRepPRs, userID)
+type ListLiftsParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
+
+func (q *Queries) ListLifts(ctx context.Context, arg ListLiftsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, listLifts, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -119,14 +128,89 @@ func (q *Queries) GetRepPRs(ctx context.Context, userID uuid.UUID) ([]Lift, erro
 	return items, nil
 }
 
-const getWeightPRs = `-- name: GetWeightPRs :many
-SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
-WHERE user_id = $1
-ORDER BY weight
+const listMuscleGroupPRs = `-- name: ListMuscleGroupPRs :many
+SELECT l.id, l.exercise_name, weight, reps, ex.muscle_group, date_lifted FROM lift as l
+JOIN exercise AS ex on l.exercise_name = ex.exercise_name 
+WHERE ex.muscle_group = $1
+AND l.user_id = $2
+ORDER BY weight DESC
+LIMIT $3
+OFFSET $4
 `
 
-func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, error) {
-	rows, err := q.db.QueryContext(ctx, getWeightPRs, userID)
+type ListMuscleGroupPRsParams struct {
+	MuscleGroup string    `json:"muscle_group"`
+	UserID      uuid.UUID `json:"user_id"`
+	Limit       int32     `json:"limit"`
+	Offset      int32     `json:"offset"`
+}
+
+type ListMuscleGroupPRsRow struct {
+	ID           int64     `json:"id"`
+	ExerciseName string    `json:"exercise_name"`
+	Weight       float32   `json:"weight"`
+	Reps         int32     `json:"reps"`
+	MuscleGroup  string    `json:"muscle_group"`
+	DateLifted   time.Time `json:"date_lifted"`
+}
+
+func (q *Queries) ListMuscleGroupPRs(ctx context.Context, arg ListMuscleGroupPRsParams) ([]ListMuscleGroupPRsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listMuscleGroupPRs,
+		arg.MuscleGroup,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListMuscleGroupPRsRow{}
+	for rows.Next() {
+		var i ListMuscleGroupPRsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExerciseName,
+			&i.Weight,
+			&i.Reps,
+			&i.MuscleGroup,
+			&i.DateLifted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listNamedLiftWeightPRs = `-- name: ListNamedLiftWeightPRs :many
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
+WHERE user_id = $1 AND exercise_name = $2
+ORDER BY weight DESC
+LIMIT $3
+OFFSET $4
+`
+
+type ListNamedLiftWeightPRsParams struct {
+	UserID       uuid.UUID `json:"user_id"`
+	ExerciseName string    `json:"exercise_name"`
+	Limit        int32     `json:"limit"`
+	Offset       int32     `json:"offset"`
+}
+
+func (q *Queries) ListNamedLiftWeightPRs(ctx context.Context, arg ListNamedLiftWeightPRsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, listNamedLiftWeightPRs,
+		arg.UserID,
+		arg.ExerciseName,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +240,131 @@ func (q *Queries) GetWeightPRs(ctx context.Context, userID uuid.UUID) ([]Lift, e
 	return items, nil
 }
 
-const updateReps = `-- name: UpdateReps :exec
+const listRepPRs = `-- name: ListRepPRs :many
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift 
+WHERE user_id = $1
+ORDER BY reps DESC
+LIMIT $2
+OFFSET $3
+`
+
+type ListRepPRsParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
+
+func (q *Queries) ListRepPRs(ctx context.Context, arg ListRepPRsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, listRepPRs, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Lift{}
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExerciseName,
+			&i.Weight,
+			&i.Reps,
+			&i.DateLifted,
+			&i.UserID,
+			&i.SetID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWeightPRLifts = `-- name: ListWeightPRLifts :many
+SELECT id, exercise_name, weight, reps, date_lifted, user_id, set_id FROM lift
+WHERE user_id = $1
+ORDER BY weight DESC
+LIMIT $2
+OFFSET $3
+`
+
+type ListWeightPRLiftsParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
+
+func (q *Queries) ListWeightPRLifts(ctx context.Context, arg ListWeightPRLiftsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, listWeightPRLifts, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Lift{}
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExerciseName,
+			&i.Weight,
+			&i.Reps,
+			&i.DateLifted,
+			&i.UserID,
+			&i.SetID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateLiftWeight = `-- name: UpdateLiftWeight :one
+UPDATE lift SET
+weight = $1
+WHERE id = $2 AND
+user_id = $3
+RETURNING id, exercise_name, weight, reps, date_lifted, user_id, set_id
+`
+
+type UpdateLiftWeightParams struct {
+	Weight float32   `json:"weight"`
+	ID     int64     `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) UpdateLiftWeight(ctx context.Context, arg UpdateLiftWeightParams) (Lift, error) {
+	row := q.db.QueryRowContext(ctx, updateLiftWeight, arg.Weight, arg.ID, arg.UserID)
+	var i Lift
+	err := row.Scan(
+		&i.ID,
+		&i.ExerciseName,
+		&i.Weight,
+		&i.Reps,
+		&i.DateLifted,
+		&i.UserID,
+		&i.SetID,
+	)
+	return i, err
+}
+
+const updateReps = `-- name: UpdateReps :one
 UPDATE lift SET
 reps = $1
 WHERE id = $2 AND
 user_id = $3
+RETURNING id, exercise_name, weight, reps, date_lifted, user_id, set_id
 `
 
 type UpdateRepsParams struct {
@@ -169,25 +373,17 @@ type UpdateRepsParams struct {
 	UserID uuid.UUID `json:"user_id"`
 }
 
-func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) error {
-	_, err := q.db.ExecContext(ctx, updateReps, arg.Reps, arg.ID, arg.UserID)
-	return err
-}
-
-const updateWeight = `-- name: UpdateWeight :exec
-UPDATE lift SET
-weight = $1
-WHERE id = $2 AND
-user_id = $3
-`
-
-type UpdateWeightParams struct {
-	Weight float32   `json:"weight"`
-	ID     int64     `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-}
-
-func (q *Queries) UpdateWeight(ctx context.Context, arg UpdateWeightParams) error {
-	_, err := q.db.ExecContext(ctx, updateWeight, arg.Weight, arg.ID, arg.UserID)
-	return err
+func (q *Queries) UpdateReps(ctx context.Context, arg UpdateRepsParams) (Lift, error) {
+	row := q.db.QueryRowContext(ctx, updateReps, arg.Reps, arg.ID, arg.UserID)
+	var i Lift
+	err := row.Scan(
+		&i.ID,
+		&i.ExerciseName,
+		&i.Weight,
+		&i.Reps,
+		&i.DateLifted,
+		&i.UserID,
+		&i.SetID,
+	)
+	return i, err
 }

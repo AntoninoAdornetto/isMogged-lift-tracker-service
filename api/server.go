@@ -32,6 +32,17 @@ func NewServer(store *db.Store) *Server {
 	router.PATCH("/exercise/group", server.updateExerciseMuscleGroup)
 	router.DELETE("/exercise/:exercise_name", server.deleteExercise)
 
+	router.POST("/lift", server.createLift)
+	router.GET("/lift/:id", server.getLift)
+	router.GET("/lift", server.listLifts)
+	router.GET("/lift/pr/weight", server.listWeightPRs)
+	router.GET("/lift/pr/:exercise_name", server.listNamedLiftWeightPRs)
+	router.GET("/lift/pr/group/:muscle_group", server.ListMuscleGroupPRs)
+	router.GET("/lift/pr/reps", server.listRepPRs)
+	router.PATCH("/lift/:id/weight", server.updateLiftWeight)
+	router.PATCH("/lift/:id/reps", server.updateReps)
+	router.DELETE("/lift/:id", server.deleteLift)
+
 	server.router = router
 	return server
 }
