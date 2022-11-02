@@ -155,11 +155,10 @@ func TestUpdateReps(t *testing.T) {
 		UserID: l.UserID,
 	}
 
-	testQueries.UpdateReps(context.Background(), args)
+	patch, err := testQueries.UpdateReps(context.Background(), args)
 
-	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
-	require.Equal(t, l.Reps-1, query.Reps)
+	require.Equal(t, l.Reps-1, patch.Reps)
 }
 
 func TestUpdateLiftWeight(t *testing.T) {
