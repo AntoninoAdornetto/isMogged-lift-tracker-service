@@ -13,15 +13,16 @@ import (
 )
 
 const createSet = `-- name: CreateSet :one
-INSERT INTO set DEFAULT VALUES
-RETURNING id
+INSERT INTO set (user_id) 
+VALUES ($1)
+RETURNING id, user_id
 `
 
-func (q *Queries) CreateSet(ctx context.Context) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, createSet)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateSet(ctx context.Context, userID uuid.UUID) (Set, error) {
+	row := q.db.QueryRowContext(ctx, createSet, userID)
+	var i Set
+	err := row.Scan(&i.ID, &i.UserID)
+	return i, err
 }
 
 const deleteSet = `-- name: DeleteSet :exec
@@ -76,12 +77,13 @@ func (q *Queries) GetLiftSets(ctx context.Context, id uuid.UUID) ([]GetLiftSetsR
 }
 
 const getSet = `-- name: GetSet :one
-SELECT id FROM set 
+SELECT id, user_id FROM set 
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetSet(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+func (q *Queries) GetSet(ctx context.Context, id uuid.UUID) (Set, error) {
 	row := q.db.QueryRowContext(ctx, getSet, id)
-	err := row.Scan(&id)
-	return id, err
+	var i Set
+	err := row.Scan(&i.ID, &i.UserID)
+	return i, err
 }

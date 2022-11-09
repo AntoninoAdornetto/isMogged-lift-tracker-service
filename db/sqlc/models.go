@@ -40,5 +40,6 @@ type MuscleGroup struct {
 }
 
 type Set struct {
-	ID uuid.UUID `json:"id"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }

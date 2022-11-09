@@ -56,11 +56,13 @@ func (store *Store) CreateNewLift(ctx context.Context, args CreateNewLiftReq) (C
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		res.SetId, err = q.CreateSet(ctx)
+		set, err := q.CreateSet(ctx, args.UserID)
 
 		if err != nil {
 			return err
 		}
+
+		res.SetId = set.ID
 
 		res.Lift, err = q.CreateLift(ctx, CreateLiftParams{
 			ExerciseName: args.ExerciseName,

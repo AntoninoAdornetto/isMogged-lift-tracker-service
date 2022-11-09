@@ -5,19 +5,12 @@ import (
 	"testing"
 
 	"github.com/AntoninoAdornetto/lift_tracker/util"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 var acc Account
-var set uuid.UUID
+var set Set
 var isSetCreated = false
-
-func cleanUpLift() {
-	testQueries.DeleteAccount(context.Background(), acc.ID)
-	testQueries.DeleteSet(context.Background(), set)
-	isSetCreated = false
-}
 
 func CreateRandomLift(t *testing.T) Lift {
 	if acc.Lifter == "" {
@@ -36,7 +29,7 @@ func CreateRandomLift(t *testing.T) Lift {
 		Weight:       float32(util.RandomInt(100, 200)),
 		Reps:         int32(util.RandomInt(6, 12)),
 		UserID:       acc.ID,
-		SetID:        set,
+		SetID:        set.ID,
 	}
 
 	l, err := testQueries.CreateLift(context.Background(), arg)
@@ -127,7 +120,7 @@ func TestListWeightPRLifts(t *testing.T) {
 			Weight:       float32(i),
 			Reps:         int32(util.RandomInt(6, 12)),
 			UserID:       newAcc.ID,
-			SetID:        set,
+			SetID:        set.ID,
 		})
 	}
 
@@ -175,5 +168,4 @@ func TestUpdateLiftWeight(t *testing.T) {
 	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
 	require.Equal(t, l.Weight-1, query.Weight)
-	cleanUpLift()
 }

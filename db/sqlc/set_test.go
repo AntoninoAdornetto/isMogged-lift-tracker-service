@@ -4,26 +4,29 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func CreateRandomSet(t *testing.T) uuid.UUID {
-	s, err := testQueries.CreateSet(context.Background())
+func CreateRandomSet(t *testing.T) Set {
+	acc := GenerateRandAccount(t)
+	s, err := testQueries.CreateSet(context.Background(), acc.ID)
 	require.NoError(t, err)
 	require.NotNil(t, s.ID)
+	require.NotNil(t, s.UserID)
 	return s
 }
 
 func TestCreateSet(t *testing.T) {
 	s := CreateRandomSet(t)
-	testQueries.DeleteSet(context.Background(), s)
+	testQueries.DeleteSet(context.Background(), s.ID)
 }
 
 func TestDeleteSet(t *testing.T) {
 	s := CreateRandomSet(t)
-	q := testQueries.DeleteSet(context.Background(), s)
-	require.Empty(t, q) // TODO: Add better assertions.
+	testQueries.DeleteSet(context.Background(), s.ID)
+	query, err := testQueries.GetSet(context.Background(), s.ID)
+	require.Error(t, err)
+	require.Empty(t, query)
 }
 
 func TestGetLiftSets(t *testing.T) {
@@ -49,7 +52,7 @@ func TestGetLiftSets(t *testing.T) {
 			Weight:       float32(100 + i),
 			Reps:         int32(i + 1),
 			UserID:       acc.ID,
-			SetID:        s,
+			SetID:        s.ID,
 		}
 
 		l, err := testQueries.CreateLift(context.Background(), liftArgs)
@@ -61,7 +64,7 @@ func TestGetLiftSets(t *testing.T) {
 		args = append(args, l)
 	}
 
-	liftSets, err := testQueries.GetLiftSets(context.Background(), s)
+	liftSets, err := testQueries.GetLiftSets(context.Background(), s.ID)
 	require.NoError(t, err)
 
 	for _, set := range liftSets {
@@ -75,5 +78,5 @@ func TestGetLiftSets(t *testing.T) {
 	require.GreaterOrEqual(t, len(args), 3)
 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
 	testQueries.DeleteAccount(context.Background(), acc.ID)
-	testQueries.DeleteSet(context.Background(), s)
+	testQueries.DeleteSet(context.Background(), s.ID)
 }

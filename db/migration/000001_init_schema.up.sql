@@ -20,7 +20,8 @@ CREATE TABLE "exercise" (
 );
 
 CREATE TABLE "set" (
-  "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4()
+  "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "user_id" uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 );
 
 CREATE TABLE "lift" (
