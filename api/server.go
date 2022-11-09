@@ -44,6 +44,8 @@ func NewServer(store *db.Store) *Server {
 	router.DELETE("/lift/:id", server.deleteLift)
 
 	router.POST("/set", server.createSet)
+	router.GET("/set/:set_id", server.getSet)
+	router.GET("/set/lift/:set_id", server.getLiftSet)
 
 	server.router = router
 	return server
