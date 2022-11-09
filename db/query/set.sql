@@ -1,5 +1,6 @@
 -- name: CreateSet :one
-INSERT INTO set DEFAULT VALUES
+INSERT INTO set (user_id) 
+VALUES ($1)
 RETURNING *;
 
 -- name: GetSet :one
