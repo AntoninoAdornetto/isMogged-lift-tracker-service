@@ -26,7 +26,6 @@ func CreateRandMuscleGroup(t *testing.T, n string) MuscleGroup {
 func TestCreateMuscleGroup(t *testing.T) {
 	n := util.RandomString(10)
 	CreateRandMuscleGroup(t, n)
-	testQueries.DeleteGroup(context.Background(), n)
 }
 
 func TestDeleteMuscleGroup(t *testing.T) {
@@ -49,9 +48,6 @@ func TestGetMuscleGroup(t *testing.T) {
 	query, err := testQueries.GetMuscleGroup(context.Background(), n)
 	require.NoError(t, err)
 	require.Equal(t, n, query.GroupName)
-
-	testQueries.DeleteGroup(context.Background(), n)
-	testQueries.DeleteGroup(context.Background(), mg.GroupName)
 }
 
 func TestGetMuscleGroups(t *testing.T) {
@@ -66,10 +62,6 @@ func TestGetMuscleGroups(t *testing.T) {
 	query, err := testQueries.GetMuscleGroups(context.Background())
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(query), 3)
-
-	testQueries.DeleteGroup(context.Background(), c)
-	testQueries.DeleteGroup(context.Background(), s)
-	testQueries.DeleteGroup(context.Background(), l)
 }
 
 func TestUpdateMuscleGroup(t *testing.T) {
