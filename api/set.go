@@ -92,3 +92,33 @@ func (server *Server) getLiftSet(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, set)
 }
+
+func (server *Server) deleteSet(ctx *gin.Context) {
+	var req getSetReq
+
+	if err := ctx.BindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	setId, err := util.ParseUUIDStr(req.SetId, ctx)
+	if err != nil {
+		return
+	}
+
+	_, err = server.store.GetSet(ctx, setId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	server.store.DeleteSet(ctx, setId)
+
+	ctx.JSON(http.StatusNoContent, nil)
+}
