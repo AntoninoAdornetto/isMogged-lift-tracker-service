@@ -43,6 +43,11 @@ func NewServer(store *db.Store) *Server {
 	router.PATCH("/lift/:id/reps", server.updateReps)
 	router.DELETE("/lift/:id", server.deleteLift)
 
+	router.POST("/set", server.createSet)
+	router.GET("/set/:set_id", server.getSet)
+	router.GET("/set/lift/:set_id", server.getLiftSet)
+	router.DELETE("/set/:set_id", server.deleteSet)
+
 	server.router = router
 	return server
 }
