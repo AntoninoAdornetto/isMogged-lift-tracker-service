@@ -3,17 +3,17 @@ package api
 import (
 	"database/sql"
 	"net/http"
-	"time"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type createAccountReq struct {
-	Lifter *string `json:"lifter" binding:"required,min=3"`
-	// BirthDate string `json:"birth_date" binding:"required"`
-	Weight int32 `json:"weight" binding:"required"`
+	Lifter    *string `json:"lifter" binding:"required,min=3"`
+	BirthDate string  `json:"birth_date" binding:"required"`
+	Weight    int32   `json:"weight" binding:"required"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
@@ -23,16 +23,9 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	// TODO: Fix JSON encoded date parsing.
-	// bDay, err := time.Parse("1999-09-05", req.BirthDate)
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	// 	return
-	// }
-
 	arg := db.CreateAccountParams{
 		Lifter:    *req.Lifter,
-		BirthDate: time.Now(),
+		BirthDate: util.FormatDOB(req.BirthDate),
 		Weight:    req.Weight,
 	}
 
