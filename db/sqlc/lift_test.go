@@ -58,6 +58,36 @@ func TestGetLift(t *testing.T) {
 	require.NotNil(t, query.ID)
 }
 
+func TestListLifts(t *testing.T) {
+	_1 := CreateRandomLift(t)
+	l := 3
+
+	for i := 0; i < l-1; i++ {
+		CreateRandomLift(t)
+	}
+
+	args := ListLiftsParams{
+		UserID: _1.UserID,
+		Limit:  int32(l),
+		Offset: 0,
+	}
+
+	query, err := testQueries.ListLifts(context.Background(), args)
+
+	require.NoError(t, err)
+	require.Len(t, query, l)
+
+	for _, d := range query {
+		require.NotNil(t, d.ID)
+		require.NotNil(t, d.UserID)
+		require.NotNil(t, d.ExerciseName)
+		require.NotNil(t, d.Weight)
+		require.NotNil(t, d.Reps)
+		require.NotNil(t, d.SetID)
+		require.NotNil(t, d.DateLifted)
+	}
+}
+
 func TestDeleteLift(t *testing.T) {
 	l := CreateRandomLift(t)
 
@@ -68,39 +98,47 @@ func TestDeleteLift(t *testing.T) {
 	require.Empty(t, query)
 }
 
-// func TestGetRepPRs(t *testing.T) {
-// 	newAcc := GenerateRandAccount(t)
-// 	mg := CreateRandMuscleGroup(t, "Chesticles")
-// 	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
-// 		ExerciseName: "Bench Press",
-// 		MuscleGroup:  mg.GroupName,
-// 	})
+func TestListRepPRLifts(t *testing.T) {
+	newAcc := GenerateRandAccount(t)
+	mg := CreateRandMuscleGroup(t, util.RandomString(10))
 
-// 	require.NoError(t, err)
+	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		ExerciseName: util.RandomString(9),
+		MuscleGroup:  mg.GroupName,
+	})
 
-// 	LIFTLEN := 5
+	require.NoError(t, err)
 
-// 	for i := 0; i < LIFTLEN; i++ {
-// 		testQueries.CreateLift(context.Background(), CreateLiftParams{
-// 			ExerciseName: ex.ExerciseName,
-// 			Weight:       float32(util.RandomInt(100, 200)),
-// 			Reps:         int32(i + 1),
-// 			UserID:       newAcc.ID,
-// 			SetID:        set,
-// 		})
-// 	}
+	LIFTLEN := 5
 
-// 	prs, err := testQueries.GetRepPRs(context.Background(), newAcc.ID)
-// 	require.NoError(t, err)
-// 	require.Len(t, prs, LIFTLEN)
+	for i := 0; i < LIFTLEN; i++ {
+		testQueries.CreateLift(context.Background(), CreateLiftParams{
+			ExerciseName: ex.ExerciseName,
+			Weight:       float32(i),
+			Reps:         int32(util.RandomInt(1, 100)),
+			UserID:       newAcc.ID,
+			SetID:        set.ID,
+		})
+	}
 
-// 	for i := 0; i < len(prs)-1; i++ {
-// 		require.Greater(t, prs[i+1].Reps, prs[i].Reps)
-// 	}
+	prs, err := testQueries.ListRepPRs(context.Background(), ListRepPRsParams{
+		UserID: acc.ID,
+		Limit:  10,
+		Offset: 0,
+	})
+	require.NoError(t, err)
 
-// 	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
-// 	testQueries.DeleteGroup(context.Background(), mg.GroupName)
-// }
+	for i := 0; i < len(prs)-1; i++ {
+		require.GreaterOrEqual(t, prs[i].Reps, prs[i+1].Reps)
+		require.NotNil(t, prs[i].ExerciseName)
+		require.NotNil(t, prs[i].ID)
+		require.NotNil(t, prs[i].SetID)
+		require.NotNil(t, prs[i].Weight)
+	}
+
+	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
+	testQueries.DeleteGroup(context.Background(), mg.GroupName)
+}
 
 func TestListWeightPRLifts(t *testing.T) {
 	newAcc := GenerateRandAccount(t)
@@ -132,7 +170,7 @@ func TestListWeightPRLifts(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < len(prs)-1; i++ {
-		require.Greater(t, prs[i].Weight, prs[i+1].Weight)
+		require.GreaterOrEqual(t, prs[i].Weight, prs[i+1].Weight)
 	}
 
 	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
@@ -168,4 +206,90 @@ func TestUpdateLiftWeight(t *testing.T) {
 	query, err := testQueries.GetLift(context.Background(), l.ID)
 	require.NoError(t, err)
 	require.Equal(t, l.Weight-1, query.Weight)
+}
+
+func TestListNamedLiftWeightPRS(t *testing.T) {
+	acc_set := CreateRandomSet(t)
+	mg := CreateRandMuscleGroup(t, util.RandomString(10))
+	exName := util.RandomString(9)
+
+	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		ExerciseName: exName,
+		MuscleGroup:  mg.GroupName,
+	})
+
+	args := ListNamedLiftWeightPRsParams{
+		ExerciseName: exName,
+		UserID:       acc_set.UserID,
+		Limit:        5,
+		Offset:       0,
+	}
+
+	require.NoError(t, err)
+
+	LIFTLEN := 5
+
+	for i := 0; i < LIFTLEN; i++ {
+		testQueries.CreateLift(context.Background(), CreateLiftParams{
+			ExerciseName: ex.ExerciseName,
+			Weight:       float32(i),
+			Reps:         int32(util.RandomInt(1, 100)),
+			UserID:       acc_set.UserID,
+			SetID:        acc_set.ID,
+		})
+	}
+
+	prs, err := testQueries.ListNamedLiftWeightPRs(context.Background(), args)
+	require.NoError(t, err)
+	require.Len(t, prs, LIFTLEN)
+
+	for i := 0; i < len(prs)-1; i++ {
+		require.GreaterOrEqual(t, prs[i].Weight, prs[i+1].Weight)
+		require.Equal(t, prs[i].ExerciseName, ex.ExerciseName)
+		require.Equal(t, prs[i].SetID, acc_set.ID)
+		require.Equal(t, prs[i].UserID, acc_set.UserID)
+		require.NotNil(t, prs[i].Reps)
+		require.NotNil(t, prs[i].DateLifted)
+	}
+}
+
+func TestListMuscleGroupPRS(t *testing.T) {
+	acc_set := CreateRandomSet(t)
+	mg := CreateRandMuscleGroup(t, util.RandomString(10))
+	exName := util.RandomString(9)
+
+	ex, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		ExerciseName: exName,
+		MuscleGroup:  mg.GroupName,
+	})
+
+	require.NoError(t, err)
+
+	LIFTLEN := 5
+
+	for i := 0; i < LIFTLEN; i++ {
+		testQueries.CreateLift(context.Background(), CreateLiftParams{
+			ExerciseName: ex.ExerciseName,
+			Weight:       float32(i),
+			Reps:         int32(util.RandomInt(1, 100)),
+			UserID:       acc_set.UserID,
+			SetID:        acc_set.ID,
+		})
+	}
+
+	args := ListMuscleGroupPRsParams{
+		UserID:      acc_set.UserID,
+		MuscleGroup: mg.GroupName,
+		Limit:       5,
+		Offset:      0,
+	}
+
+	prs, err := testQueries.ListMuscleGroupPRs(context.Background(), args)
+
+	require.NoError(t, err)
+	require.Len(t, prs, LIFTLEN)
+
+	for i := 0; i < LIFTLEN; i++ {
+		require.Equal(t, prs[i].MuscleGroup, mg.GroupName)
+	}
 }
