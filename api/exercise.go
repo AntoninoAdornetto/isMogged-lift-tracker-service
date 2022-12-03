@@ -91,18 +91,30 @@ type getMuscleGroupExercisesReq struct {
 
 func (server *Server) getMuscleGroupExercises(ctx *gin.Context) {
 	var req getMuscleGroupExercisesReq
+	var query listExercisesReq
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	exs, err := server.store.GetMuscleGroupExercises(ctx, req.MuscleGroup)
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	args := db.GetMuscleGroupExercisesParams{
+		MuscleGroup: req.MuscleGroup,
+		Limit:       query.PageSize,
+		Offset:      (query.PageID - 1) * query.PageSize,
+	}
+
+	exercises, err := server.store.GetMuscleGroupExercises(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, exs)
+	ctx.JSON(http.StatusOK, exercises)
 }
 
 type updateExerciseNameReq struct {
