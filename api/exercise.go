@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
@@ -46,6 +47,11 @@ func (server *Server) getExercise(ctx *gin.Context) {
 
 	ex, err := server.store.GetExercise(ctx, req.ExerciseName)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
