@@ -19,7 +19,9 @@ OFFSET $2;
 -- name: GetMuscleGroupExercises :many
 SELECT * FROM exercise 
 WHERE muscle_group = ($1)
-ORDER BY exercise_name;
+ORDER BY exercise_name
+LIMIT $2
+OFFSET $3;
 
 -- name: UpdateExerciseName :exec
 UPDATE exercise SET

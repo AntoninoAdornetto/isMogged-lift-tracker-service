@@ -80,13 +80,20 @@ func TestGetExercises(t *testing.T) {
 }
 
 func TestGetMuscleGroupExercises(t *testing.T) {
-	for i := 0; i < 5; i++ {
+	n := 5
+	for i := 0; i < n; i++ {
 		CreateRandomExercise(t)
 	}
 
-	entries, err := testQueries.GetMuscleGroupExercises(context.Background(), MG)
+	args := GetMuscleGroupExercisesParams{
+		MuscleGroup: MG,
+		Limit:       int32(n),
+		Offset:      0,
+	}
+
+	entries, err := testQueries.GetMuscleGroupExercises(context.Background(), args)
 	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(entries), 4)
+	require.GreaterOrEqual(t, len(entries), n)
 
 	for i := 0; i < len(entries); i++ {
 		testQueries.DeleteExercise(context.Background(), entries[i].ExerciseName)
@@ -104,7 +111,11 @@ func TestUpdateExersiseMuscleGroup(t *testing.T) {
 
 	testQueries.UpdateExerciseMuscleGroup(context.Background(), args)
 
-	query, err := testQueries.GetMuscleGroupExercises(context.Background(), newMG.GroupName)
+	query, err := testQueries.GetMuscleGroupExercises(context.Background(), GetMuscleGroupExercisesParams{
+		MuscleGroup: newMG.GroupName,
+		Limit:       5,
+		Offset:      0,
+	})
 	require.NoError(t, err)
 	require.Len(t, query, 1)
 

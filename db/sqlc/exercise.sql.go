@@ -55,10 +55,18 @@ const getMuscleGroupExercises = `-- name: GetMuscleGroupExercises :many
 SELECT id, exercise_name, muscle_group FROM exercise 
 WHERE muscle_group = ($1)
 ORDER BY exercise_name
+LIMIT $2
+OFFSET $3
 `
 
-func (q *Queries) GetMuscleGroupExercises(ctx context.Context, muscleGroup string) ([]Exercise, error) {
-	rows, err := q.db.QueryContext(ctx, getMuscleGroupExercises, muscleGroup)
+type GetMuscleGroupExercisesParams struct {
+	MuscleGroup string `json:"muscle_group"`
+	Limit       int32  `json:"limit"`
+	Offset      int32  `json:"offset"`
+}
+
+func (q *Queries) GetMuscleGroupExercises(ctx context.Context, arg GetMuscleGroupExercisesParams) ([]Exercise, error) {
+	rows, err := q.db.QueryContext(ctx, getMuscleGroupExercises, arg.MuscleGroup, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
