@@ -14,45 +14,70 @@ import (
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (
-  lifter,
-  birth_date,
-  weight
+  name,
+  email,
+  password,
+  weight,
+  body_fat,
+  start_date
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $5, $6
 )
-RETURNING id, lifter, birth_date, weight, start_date
+RETURNING id, name, email, password, weight, body_fat, start_date
 `
 
 type CreateAccountParams struct {
-	Lifter    string    `json:"lifter"`
-	BirthDate time.Time `json:"birth_date"`
-	Weight    int32     `json:"weight"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	Weight    float32   `json:"weight"`
+	BodyFat   float32   `json:"body_fat"`
+	StartDate time.Time `json:"start_date"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.Lifter, arg.BirthDate, arg.Weight)
+	row := q.db.QueryRowContext(ctx, createAccount,
+		arg.Name,
+		arg.Email,
+		arg.Password,
+		arg.Weight,
+		arg.BodyFat,
+		arg.StartDate,
+	)
 	var i Account
 	err := row.Scan(
 		&i.ID,
-		&i.Lifter,
-		&i.BirthDate,
+		&i.Name,
+		&i.Email,
+		&i.Password,
 		&i.Weight,
+		&i.BodyFat,
 		&i.StartDate,
 	)
 	return i, err
 }
 
-const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM accounts WHERE id = $1
+const deleteAccount = `-- name: DeleteAccount :one
+DELETE FROM accounts WHERE id = $1 RETURNING id, name, email, password, weight, body_fat, start_date
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAccount, id)
-	return err
+func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) (Account, error) {
+	row := q.db.QueryRowContext(ctx, deleteAccount, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.Weight,
+		&i.BodyFat,
+		&i.StartDate,
+	)
+	return i, err
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, lifter, birth_date, weight, start_date FROM accounts
+SELECT id, name, email, password, weight, body_fat, start_date FROM accounts
 WHERE id = $1 LIMIT 1
 `
 
@@ -61,17 +86,18 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 	var i Account
 	err := row.Scan(
 		&i.ID,
-		&i.Lifter,
-		&i.BirthDate,
+		&i.Name,
+		&i.Email,
+		&i.Password,
 		&i.Weight,
+		&i.BodyFat,
 		&i.StartDate,
 	)
 	return i, err
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, lifter, birth_date, weight, start_date FROM accounts
-ORDER BY lifter
+SELECT id, name, email, password, weight, body_fat, start_date FROM accounts
 LIMIT $1
 OFFSET $2
 `
@@ -92,9 +118,11 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 		var i Account
 		if err := rows.Scan(
 			&i.ID,
-			&i.Lifter,
-			&i.BirthDate,
+			&i.Name,
+			&i.Email,
+			&i.Password,
 			&i.Weight,
+			&i.BodyFat,
 			&i.StartDate,
 		); err != nil {
 			return nil, err
@@ -110,18 +138,18 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 	return items, nil
 }
 
-const updateAccountWeight = `-- name: UpdateAccountWeight :exec
+const updateWeight = `-- name: UpdateWeight :exec
 UPDATE accounts SET
 weight = $1 WHERE 
-id = $2
+id = $2 RETURNING id, name, email, password, weight, body_fat, start_date
 `
 
-type UpdateAccountWeightParams struct {
-	Weight int32     `json:"weight"`
+type UpdateWeightParams struct {
+	Weight float32   `json:"weight"`
 	ID     uuid.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateAccountWeight(ctx context.Context, arg UpdateAccountWeightParams) error {
-	_, err := q.db.ExecContext(ctx, updateAccountWeight, arg.Weight, arg.ID)
+func (q *Queries) UpdateWeight(ctx context.Context, arg UpdateWeightParams) error {
+	_, err := q.db.ExecContext(ctx, updateWeight, arg.Weight, arg.ID)
 	return err
 }
