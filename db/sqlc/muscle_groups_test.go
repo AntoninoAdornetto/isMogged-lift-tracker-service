@@ -8,80 +8,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func CreateRandMuscleGroup(t *testing.T, n string) MuscleGroup {
-	args := MuscleGroup{
-		GroupName: n,
-	}
+func GenerateRandMuscleGroup(t *testing.T) MuscleGroup {
+	var muscleGroup MuscleGroup
+	muscleGroupName := util.RandomString(5)
 
-	entry, err := testQueries.CreateMuscleGroup(context.Background(), args.GroupName)
-
+	muscleGroup, err := testQueries.CreateMuscleGroup(context.Background(), muscleGroupName)
 	require.NoError(t, err)
-	require.NotEmpty(t, entry)
-	require.NotNil(t, entry.ID)
-	require.Equal(t, args.GroupName, entry.GroupName)
-
-	return entry
+	require.NotNil(t, muscleGroup.ID)
+	require.NotNil(t, muscleGroup.Name)
+	return muscleGroup
 }
 
 func TestCreateMuscleGroup(t *testing.T) {
-	n := util.RandomString(10)
-	CreateRandMuscleGroup(t, n)
-}
-
-func TestDeleteMuscleGroup(t *testing.T) {
-	n := util.RandomString(10)
-	mg := CreateRandMuscleGroup(t, n)
-	require.NotNil(t, mg.GroupName)
-
-	testQueries.DeleteGroup(context.Background(), n)
-
-	query, err := testQueries.GetMuscleGroup(context.Background(), n)
-	require.Error(t, err)
-	require.Empty(t, query.GroupName)
+	GenerateRandMuscleGroup(t)
 }
 
 func TestGetMuscleGroup(t *testing.T) {
-	n := util.RandomString(7)
-	mg := CreateRandMuscleGroup(t, n)
-	require.NotNil(t, mg.GroupName)
+	muscleGroup := GenerateRandMuscleGroup(t)
 
-	query, err := testQueries.GetMuscleGroup(context.Background(), n)
+	query, err := testQueries.GetMuscleGroup(context.Background(), muscleGroup.Name)
 	require.NoError(t, err)
-	require.Equal(t, n, query.GroupName)
+	require.NotEmpty(t, query)
 }
 
-func TestGetMuscleGroups(t *testing.T) {
-	c := util.RandomString(5)
-	s := util.RandomString(6)
-	l := util.RandomString(7)
-
-	CreateRandMuscleGroup(t, c)
-	CreateRandMuscleGroup(t, s)
-	CreateRandMuscleGroup(t, l)
+func TestListMuscleGroups(t *testing.T) {
+	n := 5
+	muscleGroups := make([]MuscleGroup, n)
+	for i := 0; i < n; i++ {
+		muscleGroups[i] = GenerateRandMuscleGroup(t)
+	}
 
 	query, err := testQueries.GetMuscleGroups(context.Background())
 	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(query), 3)
+	require.GreaterOrEqual(t, len(query), n)
+
+	for i := 0; i < n; i++ {
+		_, _ = testQueries.DeleteGroup(context.Background(), muscleGroups[i].Name)
+	}
 }
 
 func TestUpdateMuscleGroup(t *testing.T) {
-	c := util.RandomString(5)
-	u := util.RandomString(6)
+	muscleGroup := GenerateRandMuscleGroup(t)
+	newName := util.RandomString(5)
 
-	CreateRandMuscleGroup(t, c)
-
-	query, err := testQueries.GetMuscleGroup(context.Background(), c)
+	patch, err := testQueries.UpdateGroup(context.Background(), UpdateGroupParams{
+		Name:   newName,
+		Name_2: muscleGroup.Name,
+	})
 	require.NoError(t, err)
-	require.Equal(t, query.GroupName, c)
+	require.Equal(t, newName, patch.Name)
+}
 
-	args := UpdateGroupParams{
-		GroupName:   u,
-		GroupName_2: c,
-	}
+func TestDeleteMuscleGroup(t *testing.T) {
+	muscleGroup := GenerateRandMuscleGroup(t)
 
-	patch, err := testQueries.UpdateGroup(context.Background(), args)
+	d, err := testQueries.DeleteGroup(context.Background(), muscleGroup.Name)
 	require.NoError(t, err)
-	require.Equal(t, patch.GroupName, u)
-
-	testQueries.DeleteGroup(context.Background(), u)
+	require.NotEmpty(t, d)
 }
