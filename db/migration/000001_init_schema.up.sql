@@ -23,7 +23,7 @@ CREATE TABLE "category" (
 CREATE TABLE "exercise" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL UNIQUE,
-  "muscle_group" VARCHAR NOT NULL REFERENCES muscle_group(name) ON DELETE CASCADE,
+  "muscle_group" VARCHAR NOT NULL REFERENCES muscle_group(name) ON DELETE CASCADE ON UPDATE CASCADE,
   "category" VARCHAR NOT NULL REFERENCES category(name)
 );
 
