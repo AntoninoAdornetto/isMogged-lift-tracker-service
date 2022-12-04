@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type DOB struct {
+type DateComposition struct {
 	month int
 	day   int
 	year  int
 }
 
-func FormatDOB(dateStr string) time.Time {
-	dob := &DOB{}
+func FormatDate(dateStr string) time.Time {
+	dob := &DateComposition{}
 	dates := strings.Split(dateStr, "-")
 
 	for i, val := range dates {
