@@ -55,6 +55,9 @@ func TestListAccounts(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, query, n)
+	for _, v := range query {
+		require.NotEmpty(t, v)
+	}
 }
 
 func TestDeleteAccount(t *testing.T) {

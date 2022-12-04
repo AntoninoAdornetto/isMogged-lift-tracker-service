@@ -24,11 +24,12 @@ func TestCreateCategory(t *testing.T) {
 }
 
 func TestGetCategory(t *testing.T) {
-	var category Category
+	category := GenerateRandomCategory(t)
 
-	category, err := testQueries.GetCategory(context.Background(), GenerateRandomCategory(t).ID)
+	query, err := testQueries.GetCategory(context.Background(), category.ID)
 	require.NoError(t, err)
-	require.NotEmpty(t, category)
+	require.NotEmpty(t, query)
+	require.Equal(t, category.Name, query.Name)
 }
 
 func TestListCategories(t *testing.T) {
@@ -41,6 +42,9 @@ func TestListCategories(t *testing.T) {
 	query, err := testQueries.ListCategories(context.Background())
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(query), n)
+	for _, v := range query {
+		require.NotEmpty(t, v)
+	}
 
 	for i := range categories {
 		_ = testQueries.DeleteCategory(context.Background(), categories[i].ID)

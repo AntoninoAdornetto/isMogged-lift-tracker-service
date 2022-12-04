@@ -29,6 +29,7 @@ func TestGetMuscleGroup(t *testing.T) {
 	query, err := testQueries.GetMuscleGroup(context.Background(), muscleGroup.Name)
 	require.NoError(t, err)
 	require.NotEmpty(t, query)
+	require.Equal(t, muscleGroup.Name, query.Name)
 }
 
 func TestListMuscleGroups(t *testing.T) {
@@ -41,6 +42,9 @@ func TestListMuscleGroups(t *testing.T) {
 	query, err := testQueries.GetMuscleGroups(context.Background())
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(query), n)
+	for _, v := range query {
+		require.NotEmpty(t, v)
+	}
 
 	for i := 0; i < n; i++ {
 		_, _ = testQueries.DeleteGroup(context.Background(), muscleGroups[i].Name)
