@@ -29,13 +29,14 @@ CREATE TABLE "exercise" (
 
 CREATE TABLE "workout" (
   "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  "start_time" TIMESTAMP NOT NULL,
-  "finish_time" TIMESTAMP NOT NULL
+  "start_time" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "finish_time" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "user_id" uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 );
 
 CREATE TABLE "lift" (
   "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  "exercise_name" VARCHAR NOT NULL REFERENCES exercise(name) ON UPDATE CASCADE,
+  "exercise_name" VARCHAR NOT NULL REFERENCES exercise(name) ON UPDATE CASCADE ON DELETE CASCADE,
   "weight_lifted" REAL NOT NULL,
   "reps" SMALLINT NOT NULL,
   "user_id" uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
