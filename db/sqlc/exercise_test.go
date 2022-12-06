@@ -44,7 +44,7 @@ func TestGetExercise(t *testing.T) {
 func TestListExercises(t *testing.T) {
 	n := 5
 	exercises := make([]Exercise, n)
-	for i := n; i < n; i++ {
+	for i := 0; i < n; i++ {
 		exercises[i] = GenerateRandomExercise(t)
 	}
 
