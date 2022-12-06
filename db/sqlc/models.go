@@ -51,6 +51,7 @@ type Workout struct {
 	ID         uuid.UUID `json:"id"`
 	StartTime  time.Time `json:"start_time"`
 	FinishTime time.Time `json:"finish_time"`
+	UserID     uuid.UUID `json:"user_id"`
 }
 
 type WorkoutTemplate struct {
