@@ -13,13 +13,18 @@ import (
 )
 
 const createWorkout = `-- name: CreateWorkout :one
-INSERT INTO workout (user_id) 
-VALUES ($1)
+INSERT INTO workout (user_id, start_time) 
+VALUES ($1, $2)
 RETURNING id, start_time, finish_time, user_id
 `
 
-func (q *Queries) CreateWorkout(ctx context.Context, userID uuid.UUID) (Workout, error) {
-	row := q.db.QueryRowContext(ctx, createWorkout, userID)
+type CreateWorkoutParams struct {
+	UserID    uuid.UUID `json:"user_id"`
+	StartTime time.Time `json:"start_time"`
+}
+
+func (q *Queries) CreateWorkout(ctx context.Context, arg CreateWorkoutParams) (Workout, error) {
+	row := q.db.QueryRowContext(ctx, createWorkout, arg.UserID, arg.StartTime)
 	var i Workout
 	err := row.Scan(
 		&i.ID,
@@ -159,20 +164,20 @@ func (q *Queries) ListWorkouts(ctx context.Context, arg ListWorkoutsParams) ([]L
 	return items, nil
 }
 
-const updateDurationEnd = `-- name: UpdateDurationEnd :one
+const updateFinishTime = `-- name: UpdateFinishTime :one
 UPDATE workout SET
 finish_time = $1
 WHERE id = $2
 RETURNING id, start_time, finish_time, user_id
 `
 
-type UpdateDurationEndParams struct {
+type UpdateFinishTimeParams struct {
 	FinishTime time.Time `json:"finish_time"`
 	ID         uuid.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateDurationEnd(ctx context.Context, arg UpdateDurationEndParams) (Workout, error) {
-	row := q.db.QueryRowContext(ctx, updateDurationEnd, arg.FinishTime, arg.ID)
+func (q *Queries) UpdateFinishTime(ctx context.Context, arg UpdateFinishTimeParams) (Workout, error) {
+	row := q.db.QueryRowContext(ctx, updateFinishTime, arg.FinishTime, arg.ID)
 	var i Workout
 	err := row.Scan(
 		&i.ID,
