@@ -6,28 +6,44 @@ import (
 	"net/http"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type createWorkoutReq struct {
+	StartTime int64 `json:"start_time" binding:"required"`
+}
+
+type getUserIdReq struct {
 	UserId string `uri:"user_id" binding:"required"`
 }
 
 func (server *Server) createWorkout(ctx *gin.Context) {
+	var uri getUserIdReq
 	var req createWorkoutReq
-	if err := ctx.ShouldBindUri(&req); err != nil {
+	if err := ctx.ShouldBindUri(&uri); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	user_id, err := uuid.Parse(req.UserId)
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userId, err := uuid.Parse(uri.UserId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	workout, err := server.store.CreateWorkout(ctx, user_id)
+	startTime := util.FormatMSEpoch(req.StartTime)
+
+	workout, err := server.store.CreateWorkout(ctx, db.CreateWorkoutParams{
+		UserID:    userId,
+		StartTime: startTime,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -77,31 +93,52 @@ func (server *Server) getWorkout(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-// type updateWorkoutReq struct {
-// 	WorkoutId string `json:"workout_id" binding:"required"`
-// }
+type updateWorkoutReq struct {
+	WorkoutId string `uri:"workout_id" binding:"required"`
+}
 
-// type updateDurationReq struct {
-// 	finish_time string `json:"finish_time" binding:"required"`
-// }
+type updateDurationReq struct {
+	FinishTime int64 `json:"finish_time" binding:"required"`
+}
 
-// func (server *Server) updateDurationEnd(ctx *gin.Context) {
-// 	var uri updateWorkoutReq
-// 	if err := ctx.ShouldBindUri(&uri); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// 		return
-// 	}
+func (server *Server) updateFinishTime(ctx *gin.Context) {
+	var uri updateWorkoutReq
+	var req updateDurationReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// 	workoutId, err := uuid.Parse(uri.WorkoutId)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// 		return
-// 	}
+	workoutId, err := uuid.Parse(uri.WorkoutId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// 	workout, err := server.store.UpdateDurationEnd(context.Background())
-// }
+	endTime := util.FormatMSEpoch(req.FinishTime)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	args := db.UpdateFinishTimeParams{
+		ID:         workoutId,
+		FinishTime: endTime,
+	}
+
+	workout, err := server.store.UpdateFinishTime(context.Background(), args)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, workout)
+}
 
 // @todo
-// updateDurationEnd
 // ListWorkouts
 // DeleteWorkout
