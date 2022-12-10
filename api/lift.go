@@ -1,21 +1,18 @@
 package api
 
 import (
-	"database/sql"
+	"context"
 	"net/http"
+	"strconv"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
-	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
-
-type liftUserId struct {
-	UserId string `json:"user_id" binding:"required"`
-}
 
 type liftPaginationReq struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
+	PageSize int32 `form:"page_size" binding:"required,min=1,max=50"`
 }
 
 type createLiftReq struct {
@@ -23,7 +20,7 @@ type createLiftReq struct {
 	Weight       float32 `json:"weight" binding:"required"`
 	Reps         int32   `json:"reps" binding:"required"`
 	UserId       string  `json:"user_id" binding:"required"`
-	SetId        string  `json:"set_id" binding:"required"`
+	WorkoutID    string  `json:"workout_id" binding:"required"`
 }
 
 func (server *Server) createLift(ctx *gin.Context) {
@@ -33,22 +30,24 @@ func (server *Server) createLift(ctx *gin.Context) {
 		return
 	}
 
-	userId, err := util.ParseUUIDStr(req.UserId, ctx)
+	userId, err := uuid.Parse(req.UserId)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	setId, err := util.ParseUUIDStr(req.SetId, ctx)
+	workoutId, err := uuid.Parse(req.WorkoutID)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	args := db.CreateLiftParams{
 		ExerciseName: req.ExersiseName,
-		Weight:       req.Weight,
-		Reps:         req.Reps,
+		WeightLifted: req.Weight,
+		Reps:         int16(req.Reps),
 		UserID:       userId,
-		SetID:        setId,
+		WorkoutID:    workoutId,
 	}
 
 	lift, err := server.store.CreateLift(ctx, args)
@@ -61,7 +60,8 @@ func (server *Server) createLift(ctx *gin.Context) {
 }
 
 type getLiftReq struct {
-	ID int64 `uri:"id" binding:"required"`
+	ID     string `uri:"id" binding:"required"`
+	UserID string `uri:"user_id" binding:"required"`
 }
 
 func (server *Server) getLift(ctx *gin.Context) {
@@ -71,7 +71,22 @@ func (server *Server) getLift(ctx *gin.Context) {
 		return
 	}
 
-	lift, err := server.store.GetLift(ctx, req.ID)
+	userId, err := uuid.Parse(req.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	liftId, err := uuid.Parse(req.ID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	lift, err := server.store.GetLift(ctx, db.GetLiftParams{
+		UserID: userId,
+		ID:     liftId,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -80,11 +95,15 @@ func (server *Server) getLift(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lift)
 }
 
+type listLiftsReq struct {
+	UserID string `uri:"user_id" binding:"required"`
+}
+
 func (server *Server) listLifts(ctx *gin.Context) {
-	var acc liftUserId
+	var uri listLiftsReq
 	var req liftPaginationReq
 
-	if err := ctx.BindJSON(&acc); err != nil {
+	if err := ctx.ShouldBindUri(&uri); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -94,13 +113,14 @@ func (server *Server) listLifts(ctx *gin.Context) {
 		return
 	}
 
-	id, err := util.ParseUUIDStr(acc.UserId, ctx)
+	userId, err := uuid.Parse(uri.UserID)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	args := db.ListLiftsParams{
-		UserID: id,
+		UserID: userId,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
@@ -114,11 +134,16 @@ func (server *Server) listLifts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-func (server *Server) listWeightPRs(ctx *gin.Context) {
-	var acc liftUserId
+type listPRsReq struct {
+	UserID  string `uri:"user_id" binding:"required"`
+	OrderBy string `uri:"order_by" binding:"required"`
+}
+
+func (server *Server) listPRs(ctx *gin.Context) {
+	var uri listPRsReq
 	var req liftPaginationReq
 
-	if err := ctx.BindJSON(&acc); err != nil {
+	if err := ctx.ShouldBindUri(&uri); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -128,18 +153,20 @@ func (server *Server) listWeightPRs(ctx *gin.Context) {
 		return
 	}
 
-	id, err := util.ParseUUIDStr(acc.UserId, ctx)
+	id, err := uuid.Parse(uri.UserID)
 	if err != nil {
 		return
 	}
 
-	args := db.ListWeightPRLiftsParams{
-		UserID: id,
-		Limit:  req.PageSize,
-		Offset: (req.PageID - 1) * req.PageSize,
+	args := db.ListPRsParams{
+		UserID:  id,
+		Column2: uri.OrderBy,
+		Column3: uri.OrderBy,
+		Limit:   req.PageSize,
+		Offset:  (req.PageID - 1) * req.PageSize,
 	}
 
-	lifts, err := server.store.ListWeightPRLifts(ctx, args)
+	lifts, err := server.store.ListPRs(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, error(err))
 		return
@@ -148,125 +175,81 @@ func (server *Server) listWeightPRs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-type listNamedLiftWeightPRReq struct {
+type listPRsByExerciseReq struct {
 	ExerciseName string `uri:"exercise_name" binding:"required"`
+	OrderBy      string `uri:"order_by" binding:"required"`
+	UserID       string `uri:"user_id" binding:"required"`
 }
 
-func (server *Server) listNamedLiftWeightPRs(ctx *gin.Context) {
-	var acc liftUserId
-	var req listNamedLiftWeightPRReq
-	var pagination liftPaginationReq
-
-	if err := ctx.BindJSON(&acc); err != nil {
+func (server *Server) listPRsByExercise(ctx *gin.Context) {
+	var req listPRsByExerciseReq
+	var query liftPaginationReq
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	if err := ctx.ShouldBindQuery(&query); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	if err := ctx.BindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	if err := ctx.BindQuery(&pagination); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	id, err := util.ParseUUIDStr(acc.UserId, ctx)
+	userId, err := uuid.Parse(req.UserID)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := db.ListNamedLiftWeightPRsParams{
-		UserID:       id,
+	lifts, err := server.store.ListPRsByExercise(context.Background(), db.ListPRsByExerciseParams{
+		UserID:       userId,
 		ExerciseName: req.ExerciseName,
-		Limit:        pagination.PageSize,
-		Offset:       (pagination.PageID - 1) * pagination.PageSize,
-	}
-
-	lifts, err := server.store.ListNamedLiftWeightPRs(ctx, args)
+		Limit:        query.PageSize,
+		Offset:       (query.PageID - 1) * query.PageSize,
+		Column3:      req.OrderBy,
+		Column4:      req.OrderBy,
+	})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, error(err))
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-type listMuscleGroupPRsReq struct {
+type listPRsByMuscleGroupReq struct {
+	UserID      string `uri:"user_id" binding:"required"`
 	MuscleGroup string `uri:"muscle_group" binding:"required"`
+	OrderBy     string `uri:"order_by" binding:"required"`
 }
 
-func (server *Server) ListMuscleGroupPRs(ctx *gin.Context) {
-	var acc liftUserId
-	var req listMuscleGroupPRsReq
-	var pagination liftPaginationReq
+func (server *Server) listPRsByMuscleGroup(ctx *gin.Context) {
+	var req listPRsByMuscleGroupReq
+	var query liftPaginationReq
 
-	if err := ctx.BindUri(&req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	if err := ctx.BindQuery(&pagination); err != nil {
+	if err := ctx.ShouldBindQuery(&query); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	if err := ctx.BindJSON(&acc); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	userId, err := util.ParseUUIDStr(acc.UserId, ctx)
+	userId, err := uuid.Parse(req.UserID)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := db.ListMuscleGroupPRsParams{
+	lifts, err := server.store.ListPRsByMuscleGroup(context.Background(), db.ListPRsByMuscleGroupParams{
 		MuscleGroup: req.MuscleGroup,
 		UserID:      userId,
-		Limit:       pagination.PageSize,
-		Offset:      (pagination.PageID - 1) * pagination.PageSize,
-	}
-
-	lifts, err := server.store.ListMuscleGroupPRs(ctx, args)
-
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, error(err))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, lifts)
-}
-
-func (server *Server) listRepPRs(ctx *gin.Context) {
-	var acc liftUserId
-	var pagination liftPaginationReq
-
-	if err := ctx.BindJSON(&acc); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	if err := ctx.BindQuery(&pagination); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	userId, err := util.ParseUUIDStr(acc.UserId, ctx)
-	if err != nil {
-		return
-	}
-
-	args := db.ListRepPRsParams{
-		UserID: userId,
-		Limit:  pagination.PageSize,
-		Offset: (pagination.PageID - 1) * pagination.PageSize,
-	}
-
-	lifts, err := server.store.ListRepPRs(ctx, args)
-
+		Column3:     req.OrderBy,
+		Column4:     req.OrderBy,
+		Limit:       query.PageSize,
+		Offset:      (query.PageID - 1) * query.PageSize,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -275,115 +258,76 @@ func (server *Server) listRepPRs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lifts)
 }
 
-type updateLiftWeightReq struct {
-	Weight float32 `json:"weight" binding:"required"`
-	UserID string  `json:"user_id" binding:"required"`
+type updateLiftReq struct {
+	WeightLifted string `json:"weight_lifted"`
+	Reps         string `json:"reps"`
 }
 
-func (server *Server) updateLiftWeight(ctx *gin.Context) {
-	var req updateLiftWeightReq
-	var lift getLiftReq
+type getLiftByIdReq struct {
+	ID string `uri:"id" binding:"required"`
+}
 
-	if err := ctx.BindJSON(&req); err != nil {
+func (server *Server) updateLift(ctx *gin.Context) {
+	var uri getLiftByIdReq
+	var req updateLiftReq
+	var args db.UpdateLiftParams
+	weightPrecision := 32
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	if err := ctx.BindUri(&lift); err != nil {
+	if err := ctx.ShouldBindUri(&uri); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	userId, err := util.ParseUUIDStr(req.UserID, ctx)
+	id, err := uuid.Parse(uri.ID)
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	args.ID = id
 
-	args := db.UpdateLiftWeightParams{
-		Weight: req.Weight,
-		UserID: userId,
-		ID:     lift.ID,
+	patchedWeight, err := strconv.ParseFloat(req.WeightLifted, weightPrecision)
+	if err == nil {
+		args.Column1 = float32(patchedWeight)
 	}
 
-	patch, err := server.store.UpdateLiftWeight(ctx, args)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
+	patchedReps, err := strconv.Atoi(req.Reps)
+	if err == nil {
+		args.Column2 = int16(patchedReps)
+	}
 
+	patched, err := server.store.UpdateLift(context.Background(), args)
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, patch)
-}
-
-type updateRepsReq struct {
-	Reps   int32  `json:"reps" binding:"required"`
-	UserID string `json:"user_id" binding:"required"`
-}
-
-func (server *Server) updateReps(ctx *gin.Context) {
-	var req updateRepsReq
-	var lift getLiftReq
-
-	if err := ctx.BindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	if err := ctx.BindUri(&lift); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	userId, err := util.ParseUUIDStr(req.UserID, ctx)
-	if err != nil {
-		return
-	}
-
-	args := db.UpdateRepsParams{
-		Reps:   req.Reps,
-		UserID: userId,
-		ID:     lift.ID,
-	}
-
-	patch, err := server.store.UpdateReps(ctx, args)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, patch)
+	ctx.JSON(http.StatusOK, patched)
 }
 
 func (server *Server) deleteLift(ctx *gin.Context) {
-	var lift getLiftReq
+	var lift getLiftByIdReq
 
 	if err := ctx.BindUri(&lift); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	query, err := server.store.GetLift(ctx, lift.ID)
-
+	id, err := uuid.Parse(lift.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	server.store.DeleteLift(ctx, query.ID)
+	err = server.store.DeleteLift(context.Background(), id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
 	ctx.JSON(http.StatusNoContent, nil)
 }
