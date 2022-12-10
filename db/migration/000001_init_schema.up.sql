@@ -43,15 +43,14 @@ CREATE TABLE "lift" (
   "workout_id" uuid NOT NULL REFERENCES workout(id) ON DELETE CASCADE
 );
 
-CREATE TABLE "workout_template" (
-  "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  "name" VARCHAR NOT NULL,
-  "rating" REAL
+CREATE TABLE "workout_json" (
+  workout_id uuid NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
+  workout_json jsonb NOT NULL
 );
 
 CREATE INDEX ON "accounts" ("id");
 CREATE INDEX ON "exercise" ("name");
+CREATE INDEX ON "lift" ("user_id");
 CREATE INDEX ON "lift" ("weight_lifted");
 CREATE INDEX ON "lift" ("reps");
-CREATE INDEX ON "workout" ("start_time");
-CREATE INDEX ON "workout_template" ("rating");
+CREATE INDEX ON "workout" ("user_id");
