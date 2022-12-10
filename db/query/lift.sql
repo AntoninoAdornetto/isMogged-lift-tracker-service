@@ -11,8 +11,10 @@ INSERT INTO lift (
 RETURNING *;
 
 -- name: GetLift :one
-SELECT * FROM lift 
-WHERE id = $1 LIMIT 1;
+SELECT * FROM lift
+WHERE user_id = $1
+AND id = $2
+LIMIT 1;
 
 -- name: ListLifts :many
 SELECT * FROM lift
