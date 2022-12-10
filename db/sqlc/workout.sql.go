@@ -36,14 +36,10 @@ func (q *Queries) CreateWorkout(ctx context.Context, arg CreateWorkoutParams) (W
 }
 
 const deleteWorkout = `-- name: DeleteWorkout :exec
-
 DELETE FROM workout
 WHERE id = $1
 `
 
-// @todo
-// ListWeightPRWorkouts :many
-// ListRepPRWorkouts :many
 func (q *Queries) DeleteWorkout(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteWorkout, id)
 	return err
@@ -52,13 +48,9 @@ func (q *Queries) DeleteWorkout(ctx context.Context, id uuid.UUID) error {
 const getWorkout = `-- name: GetWorkout :many
 SELECT w.id, exercise_name, weight_lifted, reps, start_time, finish_time, l.user_id
 FROM workout AS w
-JOIN lift AS l ON w.id = $1 AND l.user_id = $2
+JOIN lift AS l ON l.workout_id = w.id
+WHERE w.id = $1
 `
-
-type GetWorkoutParams struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-}
 
 type GetWorkoutRow struct {
 	ID           uuid.UUID `json:"id"`
@@ -70,8 +62,9 @@ type GetWorkoutRow struct {
 	UserID       uuid.UUID `json:"user_id"`
 }
 
-func (q *Queries) GetWorkout(ctx context.Context, arg GetWorkoutParams) ([]GetWorkoutRow, error) {
-	rows, err := q.db.QueryContext(ctx, getWorkout, arg.ID, arg.UserID)
+// JOIN lift AS l ON w.id = $1 AND l.user_id = $2;
+func (q *Queries) GetWorkout(ctx context.Context, id uuid.UUID) ([]GetWorkoutRow, error) {
+	rows, err := q.db.QueryContext(ctx, getWorkout, id)
 	if err != nil {
 		return nil, err
 	}
@@ -102,51 +95,30 @@ func (q *Queries) GetWorkout(ctx context.Context, arg GetWorkoutParams) ([]GetWo
 }
 
 const listWorkouts = `-- name: ListWorkouts :many
-SELECT
-w.id, exercise_name, weight_lifted, reps, start_time, finish_time, l.user_id
-FROM workout AS w
-JOIN lift AS l ON w.id = $1 AND l.user_id = $2
-ORDER BY start_time
-LIMIT $3
-OFFSET $4
+SELECT id, start_time, finish_time, user_id FROM workout
+WHERE user_id = $1
+ORDER BY start_time DESC
+LIMIT $2
+OFFSET $3
 `
 
 type ListWorkoutsParams struct {
-	ID     uuid.UUID `json:"id"`
 	UserID uuid.UUID `json:"user_id"`
 	Limit  int32     `json:"limit"`
 	Offset int32     `json:"offset"`
 }
 
-type ListWorkoutsRow struct {
-	ID           uuid.UUID `json:"id"`
-	ExerciseName string    `json:"exercise_name"`
-	WeightLifted float32   `json:"weight_lifted"`
-	Reps         int16     `json:"reps"`
-	StartTime    time.Time `json:"start_time"`
-	FinishTime   time.Time `json:"finish_time"`
-	UserID       uuid.UUID `json:"user_id"`
-}
-
-func (q *Queries) ListWorkouts(ctx context.Context, arg ListWorkoutsParams) ([]ListWorkoutsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listWorkouts,
-		arg.ID,
-		arg.UserID,
-		arg.Limit,
-		arg.Offset,
-	)
+func (q *Queries) ListWorkouts(ctx context.Context, arg ListWorkoutsParams) ([]Workout, error) {
+	rows, err := q.db.QueryContext(ctx, listWorkouts, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListWorkoutsRow{}
+	items := []Workout{}
 	for rows.Next() {
-		var i ListWorkoutsRow
+		var i Workout
 		if err := rows.Scan(
 			&i.ID,
-			&i.ExerciseName,
-			&i.WeightLifted,
-			&i.Reps,
 			&i.StartTime,
 			&i.FinishTime,
 			&i.UserID,

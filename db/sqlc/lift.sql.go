@@ -62,12 +62,19 @@ func (q *Queries) DeleteLift(ctx context.Context, id uuid.UUID) error {
 }
 
 const getLift = `-- name: GetLift :one
-SELECT id, exercise_name, weight_lifted, reps, user_id, workout_id FROM lift 
-WHERE id = $1 LIMIT 1
+SELECT id, exercise_name, weight_lifted, reps, user_id, workout_id FROM lift
+WHERE user_id = $1
+AND id = $2
+LIMIT 1
 `
 
-func (q *Queries) GetLift(ctx context.Context, id uuid.UUID) (Lift, error) {
-	row := q.db.QueryRowContext(ctx, getLift, id)
+type GetLiftParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
+}
+
+func (q *Queries) GetLift(ctx context.Context, arg GetLiftParams) (Lift, error) {
+	row := q.db.QueryRowContext(ctx, getLift, arg.UserID, arg.ID)
 	var i Lift
 	err := row.Scan(
 		&i.ID,

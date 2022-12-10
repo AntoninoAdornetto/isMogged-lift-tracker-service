@@ -5,7 +5,7 @@
 package db
 
 import (
-	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -54,8 +54,7 @@ type Workout struct {
 	UserID     uuid.UUID `json:"user_id"`
 }
 
-type WorkoutTemplate struct {
-	ID     uuid.UUID       `json:"id"`
-	Name   string          `json:"name"`
-	Rating sql.NullFloat64 `json:"rating"`
+type WorkoutJson struct {
+	WorkoutID   uuid.UUID       `json:"workout_id"`
+	WorkoutJson json.RawMessage `json:"workout_json"`
 }
