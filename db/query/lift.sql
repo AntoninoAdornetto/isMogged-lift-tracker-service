@@ -19,52 +19,50 @@ LIMIT 1;
 -- name: ListLifts :many
 SELECT * FROM lift
 WHERE user_id = $1
-ORDER BY weight_lifted 
+ORDER BY exercise_name 
 LIMIT $2
 OFFSET $3;
 
--- name: ListWeightPRs :many
+-- name: ListPRs :many
 SELECT * FROM lift
 WHERE user_id = $1
-ORDER BY weight_lifted DESC
-LIMIT $2
-OFFSET $3;
+ORDER BY
+  CASE
+    WHEN $2 = 'weight' THEN weight_lifted
+    WHEN $3 = 'reps' THEN reps
+END DESC
+LIMIT $4
+OFFSET $5;
 
--- name: ListWeightPRsByExercise :many
+-- name: ListPRsByExercise :many
 SELECT * FROM lift
 WHERE user_id = $1 AND exercise_name = $2
-ORDER BY weight DESC
-LIMIT $3
-OFFSET $4;
+ORDER BY
+  CASE
+    WHEN $3 = 'weight' THEN weight_lifted
+    WHEN $4 = 'reps' THEN reps 
+END DESC
+LIMIT $5
+OFFSET $6;
 
--- name: ListWeightPRsByMuscleGroup :many
-SELECT l.id, l.exercise_name, weight_lifted, reps, ex.muscle_group FROM lift as l
-JOIN exercise AS ex on l.exercise_name = ex.exercise_name 
+-- name: ListPRsByMuscleGroup :many
+SELECT l.id, l.exercise_name, weight_lifted, reps, ex.muscle_group FROM lift AS l
+JOIN exercise AS ex on l.exercise_name = ex.name
 WHERE ex.muscle_group = $1
 AND l.user_id = $2
-ORDER BY weight_lifted DESC
-LIMIT $3
-OFFSET $4;
+ORDER BY
+  CASE
+    WHEN $3 = 'weight' THEN weight_lifted
+    WHEN $4 = 'reps' THEN reps
+END DESC
+LIMIT $5
+OFFSET $6;
 
--- name: ListRepPRs :many
-SELECT * FROM lift 
-WHERE user_id = $1
-ORDER BY reps DESC
-LIMIT $2
-OFFSET $3;
-
--- name: UpdateLiftWeight :one
+-- name: UpdateLift :one
 UPDATE lift SET
-weight_lifted = $1
-WHERE id = $2 AND
-user_id = $3
-RETURNING *;
-
--- name: UpdateReps :one
-UPDATE lift SET
-reps = $1
-WHERE id = $2 AND
-user_id = $3
+weight_lifted = COALESCE(NULLIF($1, 0::REAL), weight_lifted),
+reps = COALESCE(NULLIF($2, 0::SMALLINT), reps)
+WHERE id = $3
 RETURNING *;
 
 -- name: DeleteLift :exec
