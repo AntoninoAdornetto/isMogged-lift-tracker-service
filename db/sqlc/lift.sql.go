@@ -90,7 +90,7 @@ func (q *Queries) GetLift(ctx context.Context, arg GetLiftParams) (Lift, error) 
 const listLifts = `-- name: ListLifts :many
 SELECT id, exercise_name, weight_lifted, reps, user_id, workout_id FROM lift
 WHERE user_id = $1
-ORDER BY weight_lifted 
+ORDER BY exercise_name 
 LIMIT $2
 OFFSET $3
 `

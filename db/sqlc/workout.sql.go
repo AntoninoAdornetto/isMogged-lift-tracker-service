@@ -62,7 +62,6 @@ type GetWorkoutRow struct {
 	UserID       uuid.UUID `json:"user_id"`
 }
 
-// JOIN lift AS l ON w.id = $1 AND l.user_id = $2;
 func (q *Queries) GetWorkout(ctx context.Context, id uuid.UUID) ([]GetWorkoutRow, error) {
 	rows, err := q.db.QueryContext(ctx, getWorkout, id)
 	if err != nil {
