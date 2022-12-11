@@ -1,1 +1,4 @@
 *.txt
+.prettierrc
+*.json
+db/sqlc/store_test.go
