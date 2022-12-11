@@ -8,135 +8,115 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const MG = "TestGroup"
+func GenerateRandomExercise(t *testing.T) Exercise {
+	muscleGroup := GenerateRandMuscleGroup(t)
+	category := GenerateRandomCategory(t)
+	exerciseName := util.RandomString(5)
 
-func CreateRandomExercise(t *testing.T) Exercise {
-	en := util.RandomString(4)
-
-	query, err := testQueries.GetMuscleGroup(context.Background(), MG)
-
-	if err != nil {
-		CreateRandMuscleGroup(t, MG)
-	}
-
-	require.NotNil(t, query.GroupName)
-
-	args := CreateExerciseParams{
-		ExerciseName: en,
-		MuscleGroup:  MG,
-	}
-
-	exersise, err := testQueries.CreateExercise(context.Background(), args)
+	exercise, err := testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+		Name:        exerciseName,
+		MuscleGroup: muscleGroup.Name,
+		Category:    category.Name,
+	})
 	require.NoError(t, err)
-	require.Equal(t, args.ExerciseName, exersise.ExerciseName)
-	require.Equal(t, args.MuscleGroup, exersise.MuscleGroup)
-	require.NotNil(t, exersise.ID)
+	require.NotEmpty(t, exercise)
+	require.NotNil(t, exercise.Name)
+	require.NotNil(t, exercise.Category)
+	require.NotNil(t, exercise.MuscleGroup)
+	require.NotNil(t, exercise.ID)
 
-	return exersise
+	return exercise
 }
 
 func TestCreateExercise(t *testing.T) {
-	ex := CreateRandomExercise(t)
-	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
-}
-
-func TestDeleteExercise(t *testing.T) {
-	ex := CreateRandomExercise(t)
-
-	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
-
-	query, err := testQueries.GetExercise(context.Background(), ex.ExerciseName)
-	require.Error(t, err)
-	require.Empty(t, query.ExerciseName)
+	GenerateRandomExercise(t)
 }
 
 func TestGetExercise(t *testing.T) {
-	ex := CreateRandomExercise(t)
+	exercise := GenerateRandomExercise(t)
 
-	query, err := testQueries.GetExercise(context.Background(), ex.ExerciseName)
+	query, err := testQueries.GetExercise(context.Background(), exercise.Name)
 	require.NoError(t, err)
-	require.NotEmpty(t, query.ExerciseName)
-
-	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
+	require.NotEmpty(t, query)
+	require.Equal(t, exercise.Name, query.Name)
 }
 
-func TestGetExercises(t *testing.T) {
-	for i := 0; i < 5; i++ {
-		CreateRandomExercise(t)
-	}
-
-	args := ListExercisesParams{
-		Limit:  5,
-		Offset: 0,
-	}
-
-	entries, err := testQueries.ListExercises(context.Background(), args)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(entries), 5)
-
-	for i := 0; i < len(entries); i++ {
-		testQueries.DeleteExercise(context.Background(), entries[i].ExerciseName)
-	}
-}
-
-func TestGetMuscleGroupExercises(t *testing.T) {
+func TestListExercises(t *testing.T) {
 	n := 5
+	exercises := make([]Exercise, n)
 	for i := 0; i < n; i++ {
-		CreateRandomExercise(t)
+		exercises[i] = GenerateRandomExercise(t)
 	}
 
-	args := GetMuscleGroupExercisesParams{
-		MuscleGroup: MG,
-		Limit:       int32(n),
-		Offset:      0,
-	}
-
-	entries, err := testQueries.GetMuscleGroupExercises(context.Background(), args)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, len(entries), n)
-
-	for i := 0; i < len(entries); i++ {
-		testQueries.DeleteExercise(context.Background(), entries[i].ExerciseName)
-	}
-}
-
-func TestUpdateExersiseMuscleGroup(t *testing.T) {
-	newMG := CreateRandMuscleGroup(t, "TestUpdateExersiseMG")
-	ex := CreateRandomExercise(t)
-
-	args := UpdateExerciseMuscleGroupParams{
-		MuscleGroup:  newMG.GroupName,
-		ExerciseName: ex.ExerciseName,
-	}
-
-	testQueries.UpdateExerciseMuscleGroup(context.Background(), args)
-
-	query, err := testQueries.GetMuscleGroupExercises(context.Background(), GetMuscleGroupExercisesParams{
-		MuscleGroup: newMG.GroupName,
-		Limit:       5,
-		Offset:      0,
+	query, err := testQueries.ListExercises(context.Background(), ListExercisesParams{
+		Limit:  int32(n),
+		Offset: 0,
 	})
 	require.NoError(t, err)
-	require.Len(t, query, 1)
-
-	testQueries.DeleteExercise(context.Background(), ex.ExerciseName)
-	testQueries.DeleteGroup(context.Background(), newMG.GroupName)
-}
-
-func TestUpdateExersiseName(t *testing.T) {
-	newEx := "Peck Deck"
-	ex := CreateRandomExercise(t)
-
-	args := UpdateExerciseNameParams{
-		ExerciseName:   newEx,
-		ExerciseName_2: ex.ExerciseName,
+	require.GreaterOrEqual(t, len(query), n)
+	for i := 0; i < n; i++ {
+		require.NotEmpty(t, query[i])
 	}
 
-	testQueries.UpdateExerciseName(context.Background(), args)
+	for _, v := range exercises {
+		_ = testQueries.DeleteExercise(context.Background(), v.Name)
+	}
+}
 
-	query, err := testQueries.GetExercise(context.Background(), newEx)
+func TestListByMuscleGroup(t *testing.T) {
+	exercise := GenerateRandomExercise(t)
+
+	query, err := testQueries.ListByMuscleGroup(context.Background(), ListByMuscleGroupParams{
+		Limit:       5,
+		Offset:      0,
+		MuscleGroup: exercise.MuscleGroup,
+	})
 	require.NoError(t, err)
-	require.Equal(t, query.ExerciseName, newEx)
+	for _, v := range query {
+		require.Equal(t, exercise.MuscleGroup, v.MuscleGroup)
+		require.NotNil(t, v.Name)
+	}
+}
 
-	testQueries.DeleteExercise(context.Background(), newEx)
+func TestUpdateExerciseName(t *testing.T) {
+	exercise := GenerateRandomExercise(t)
+	newName := util.RandomString(10)
+
+	err := testQueries.UpdateExerciseName(context.Background(), UpdateExerciseNameParams{
+		Name:   newName,
+		Name_2: exercise.Name,
+	})
+	require.NoError(t, err)
+
+	query, err := testQueries.GetExercise(context.Background(), newName)
+	require.NoError(t, err)
+	require.NotEmpty(t, query)
+	require.Equal(t, newName, query.Name)
+}
+
+func TestUpdateExerciseMuscleGroup(t *testing.T) {
+	patchMuscleGroup := GenerateRandMuscleGroup(t)
+	exercise := GenerateRandomExercise(t)
+
+	err := testQueries.UpdateMuscleGroup(context.Background(), UpdateMuscleGroupParams{
+		MuscleGroup: patchMuscleGroup.Name,
+		Name:        exercise.Name,
+	})
+	require.NoError(t, err)
+
+	query, err := testQueries.GetExercise(context.Background(), exercise.Name)
+	require.NoError(t, err)
+	require.NotEmpty(t, query)
+	require.Equal(t, patchMuscleGroup.Name, query.MuscleGroup)
+}
+
+func TestDeleteExercise(t *testing.T) {
+	exercise := GenerateRandomExercise(t)
+
+	err := testQueries.DeleteExercise(context.Background(), exercise.Name)
+	require.NoError(t, err)
+
+	query, err := testQueries.GetExercise(context.Background(), exercise.Name)
+	require.Error(t, err)
+	require.Empty(t, query)
 }

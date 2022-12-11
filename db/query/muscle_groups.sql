@@ -1,21 +1,21 @@
 -- name: CreateMuscleGroup :one
-INSERT INTO muscle_groups (
-  group_name
+INSERT INTO muscle_group (
+  name
 ) VALUES (
   $1
 )
 RETURNING *;
 
 -- name: GetMuscleGroup :one
-SELECT * FROM muscle_groups
-WHERE group_name = $1;
+SELECT * FROM muscle_group
+WHERE name = $1;
 
 -- name: GetMuscleGroups :many
-SELECT * FROM muscle_groups
-ORDER BY group_name;
+SELECT * FROM muscle_group
+ORDER BY name;
 
 -- name: UpdateGroup :one
-UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2 RETURNING *;
+UPDATE muscle_group SET name = $1 WHERE name = $2 RETURNING *;
 
--- name: DeleteGroup :exec
-DELETE FROM muscle_groups WHERE group_name = $1;
+-- name: DeleteGroup :one
+DELETE FROM muscle_group WHERE name = $1 RETURNING *;

@@ -1,37 +1,38 @@
 -- name: CreateExercise :one
 INSERT INTO exercise (
-  exercise_name,
-  muscle_group
+  name,
+  muscle_group,
+  category
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 ) RETURNING *;
 
 -- name: GetExercise :one
 SELECT * FROM exercise
-WHERE exercise_name = ($1) LIMIT 1;
+WHERE name = ($1) LIMIT 1;
 
 -- name: ListExercises :many
 SELECT * FROM exercise
-ORDER BY exercise_name
+ORDER BY name 
 LIMIT $1
 OFFSET $2;
 
--- name: GetMuscleGroupExercises :many
+-- name: ListByMuscleGroup :many
 SELECT * FROM exercise 
 WHERE muscle_group = ($1)
-ORDER BY exercise_name
+ORDER BY name
 LIMIT $2
 OFFSET $3;
 
 -- name: UpdateExerciseName :exec
 UPDATE exercise SET
-exercise_name = ($1)
-WHERE exercise_name = ($2);
+name = ($1)
+WHERE name = ($2) RETURNING *;
 
--- name: UpdateExerciseMuscleGroup :exec
+-- name: UpdateMuscleGroup :exec
 UPDATE exercise SET
 muscle_group = ($1)
-WHERE exercise_name = ($2);
+WHERE name = ($2) RETURNING *;
 
 -- name: DeleteExercise :exec
-DELETE FROM exercise WHERE exercise_name = ($1);
+DELETE FROM exercise WHERE name = ($1);

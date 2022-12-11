@@ -10,45 +10,47 @@ import (
 )
 
 const createMuscleGroup = `-- name: CreateMuscleGroup :one
-INSERT INTO muscle_groups (
-  group_name
+INSERT INTO muscle_group (
+  name
 ) VALUES (
   $1
 )
-RETURNING id, group_name
+RETURNING id, name
 `
 
-func (q *Queries) CreateMuscleGroup(ctx context.Context, groupName string) (MuscleGroup, error) {
-	row := q.db.QueryRowContext(ctx, createMuscleGroup, groupName)
+func (q *Queries) CreateMuscleGroup(ctx context.Context, name string) (MuscleGroup, error) {
+	row := q.db.QueryRowContext(ctx, createMuscleGroup, name)
 	var i MuscleGroup
-	err := row.Scan(&i.ID, &i.GroupName)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
-const deleteGroup = `-- name: DeleteGroup :exec
-DELETE FROM muscle_groups WHERE group_name = $1
+const deleteGroup = `-- name: DeleteGroup :one
+DELETE FROM muscle_group WHERE name = $1 RETURNING id, name
 `
 
-func (q *Queries) DeleteGroup(ctx context.Context, groupName string) error {
-	_, err := q.db.ExecContext(ctx, deleteGroup, groupName)
-	return err
+func (q *Queries) DeleteGroup(ctx context.Context, name string) (MuscleGroup, error) {
+	row := q.db.QueryRowContext(ctx, deleteGroup, name)
+	var i MuscleGroup
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
 }
 
 const getMuscleGroup = `-- name: GetMuscleGroup :one
-SELECT id, group_name FROM muscle_groups
-WHERE group_name = $1
+SELECT id, name FROM muscle_group
+WHERE name = $1
 `
 
-func (q *Queries) GetMuscleGroup(ctx context.Context, groupName string) (MuscleGroup, error) {
-	row := q.db.QueryRowContext(ctx, getMuscleGroup, groupName)
+func (q *Queries) GetMuscleGroup(ctx context.Context, name string) (MuscleGroup, error) {
+	row := q.db.QueryRowContext(ctx, getMuscleGroup, name)
 	var i MuscleGroup
-	err := row.Scan(&i.ID, &i.GroupName)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
 const getMuscleGroups = `-- name: GetMuscleGroups :many
-SELECT id, group_name FROM muscle_groups
-ORDER BY group_name
+SELECT id, name FROM muscle_group
+ORDER BY name
 `
 
 func (q *Queries) GetMuscleGroups(ctx context.Context) ([]MuscleGroup, error) {
@@ -60,7 +62,7 @@ func (q *Queries) GetMuscleGroups(ctx context.Context) ([]MuscleGroup, error) {
 	items := []MuscleGroup{}
 	for rows.Next() {
 		var i MuscleGroup
-		if err := rows.Scan(&i.ID, &i.GroupName); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -75,17 +77,17 @@ func (q *Queries) GetMuscleGroups(ctx context.Context) ([]MuscleGroup, error) {
 }
 
 const updateGroup = `-- name: UpdateGroup :one
-UPDATE muscle_groups SET group_name = $1 WHERE group_name = $2 RETURNING id, group_name
+UPDATE muscle_group SET name = $1 WHERE name = $2 RETURNING id, name
 `
 
 type UpdateGroupParams struct {
-	GroupName   string `json:"group_name"`
-	GroupName_2 string `json:"group_name_2"`
+	Name   string `json:"name"`
+	Name_2 string `json:"name_2"`
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (MuscleGroup, error) {
-	row := q.db.QueryRowContext(ctx, updateGroup, arg.GroupName, arg.GroupName_2)
+	row := q.db.QueryRowContext(ctx, updateGroup, arg.Name, arg.Name_2)
 	var i MuscleGroup
-	err := row.Scan(&i.ID, &i.GroupName)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }

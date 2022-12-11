@@ -10,7 +10,7 @@ import (
 )
 
 type createMuscleGroupReq struct {
-	GroupName *string `json:"group_name" binding:"required,min=3"`
+	Name string `json:"name" binding:"required,min=3"`
 }
 
 func (server *Server) createMuscleGroup(ctx *gin.Context) {
@@ -20,7 +20,7 @@ func (server *Server) createMuscleGroup(ctx *gin.Context) {
 		return
 	}
 
-	mg, err := server.store.CreateMuscleGroup(ctx, *req.GroupName)
+	mg, err := server.store.CreateMuscleGroup(ctx, strings.ToLower(req.Name))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -30,7 +30,7 @@ func (server *Server) createMuscleGroup(ctx *gin.Context) {
 }
 
 type getMuscleGroupReq struct {
-	GroupName *string `uri:"group_name" binding:"required"`
+	Name string `uri:"name" binding:"required"`
 }
 
 func (server *Server) getMuscleGroup(ctx *gin.Context) {
@@ -40,7 +40,7 @@ func (server *Server) getMuscleGroup(ctx *gin.Context) {
 		return
 	}
 
-	mg, err := server.store.GetMuscleGroup(ctx, *req.GroupName)
+	muscleGroup, err := server.store.GetMuscleGroup(ctx, req.Name)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -51,22 +51,22 @@ func (server *Server) getMuscleGroup(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, mg)
+	ctx.JSON(http.StatusOK, muscleGroup)
 }
 
 func (server *Server) listMuscleGroups(ctx *gin.Context) {
-	mgs, err := server.store.GetMuscleGroups(ctx)
+	muscleGroups, err := server.store.GetMuscleGroups(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, mgs)
+	ctx.JSON(http.StatusOK, muscleGroups)
 }
 
 type updateMuscleGroupReq struct {
-	UpdatedName *string `json:"updated_name" binding:"required"`
-	GroupName   *string `json:"group_name" binding:"required"`
+	GroupName   string `json:"name" binding:"required"`
+	UpdatedName string `json:"updated_name" binding:"required"`
 }
 
 func (server *Server) updateMuscleGroup(ctx *gin.Context) {
@@ -77,8 +77,8 @@ func (server *Server) updateMuscleGroup(ctx *gin.Context) {
 	}
 
 	arg := db.UpdateGroupParams{
-		GroupName:   strings.ToLower(*req.UpdatedName),
-		GroupName_2: *req.GroupName,
+		Name:   strings.ToLower(req.UpdatedName),
+		Name_2: strings.ToLower(req.GroupName),
 	}
 
 	patch, err := server.store.UpdateGroup(ctx, arg)
@@ -95,21 +95,17 @@ func (server *Server) updateMuscleGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, patch)
 }
 
-type deleteMuscleGroupReq struct {
-	GroupName *string `uri:"group_name" binding:"required"`
-}
-
 func (server *Server) deleteMuscleGroup(ctx *gin.Context) {
-	var req deleteMuscleGroupReq
+	var req getMuscleGroupReq
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	err := server.store.DeleteGroup(ctx, *req.GroupName)
+	d, err := server.store.DeleteGroup(ctx, req.Name)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, err)
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
 
@@ -117,5 +113,5 @@ func (server *Server) deleteMuscleGroup(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusNoContent, nil)
+	ctx.JSON(http.StatusOK, d)
 }

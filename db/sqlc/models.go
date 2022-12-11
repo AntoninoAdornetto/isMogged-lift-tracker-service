@@ -5,6 +5,7 @@
 package db
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,34 +13,48 @@ import (
 
 type Account struct {
 	ID        uuid.UUID `json:"id"`
-	Lifter    string    `json:"lifter"`
-	BirthDate time.Time `json:"birth_date"`
-	Weight    int32     `json:"weight"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	Weight    float32   `json:"weight"`
+	BodyFat   float32   `json:"body_fat"`
 	StartDate time.Time `json:"start_date"`
 }
 
+type Category struct {
+	ID   int16  `json:"id"`
+	Name string `json:"name"`
+}
+
 type Exercise struct {
-	ID           int64  `json:"id"`
-	ExerciseName string `json:"exercise_name"`
-	MuscleGroup  string `json:"muscle_group"`
+	ID          int32  `json:"id"`
+	Name        string `json:"name"`
+	MuscleGroup string `json:"muscle_group"`
+	Category    string `json:"category"`
 }
 
 type Lift struct {
-	ID           int64     `json:"id"`
+	ID           uuid.UUID `json:"id"`
 	ExerciseName string    `json:"exercise_name"`
-	Weight       float32   `json:"weight"`
-	Reps         int32     `json:"reps"`
-	DateLifted   time.Time `json:"date_lifted"`
+	WeightLifted float32   `json:"weight_lifted"`
+	Reps         int16     `json:"reps"`
 	UserID       uuid.UUID `json:"user_id"`
-	SetID        uuid.UUID `json:"set_id"`
+	WorkoutID    uuid.UUID `json:"workout_id"`
 }
 
 type MuscleGroup struct {
-	ID        int64  `json:"id"`
-	GroupName string `json:"group_name"`
+	ID   int16  `json:"id"`
+	Name string `json:"name"`
 }
 
-type Set struct {
-	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+type Workout struct {
+	ID         uuid.UUID `json:"id"`
+	StartTime  time.Time `json:"start_time"`
+	FinishTime time.Time `json:"finish_time"`
+	UserID     uuid.UUID `json:"user_id"`
+}
+
+type WorkoutJson struct {
+	WorkoutID   uuid.UUID       `json:"workout_id"`
+	WorkoutJson json.RawMessage `json:"workout_json"`
 }
