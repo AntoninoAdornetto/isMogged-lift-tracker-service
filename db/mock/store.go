@@ -466,18 +466,19 @@ func (mr *MockStoreMockRecorder) UpdateCategory(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCategory", reflect.TypeOf((*MockStore)(nil).UpdateCategory), arg0, arg1)
 }
 
-// UpdateExerciseName mocks base method.
-func (m *MockStore) UpdateExerciseName(arg0 context.Context, arg1 db.UpdateExerciseNameParams) error {
+// UpdateExercise mocks base method.
+func (m *MockStore) UpdateExercise(arg0 context.Context, arg1 db.UpdateExerciseParams) (db.Exercise, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateExerciseName", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "UpdateExercise", arg0, arg1)
+	ret0, _ := ret[0].(db.Exercise)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// UpdateExerciseName indicates an expected call of UpdateExerciseName.
-func (mr *MockStoreMockRecorder) UpdateExerciseName(arg0, arg1 interface{}) *gomock.Call {
+// UpdateExercise indicates an expected call of UpdateExercise.
+func (mr *MockStoreMockRecorder) UpdateExercise(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateExerciseName", reflect.TypeOf((*MockStore)(nil).UpdateExerciseName), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateExercise", reflect.TypeOf((*MockStore)(nil).UpdateExercise), arg0, arg1)
 }
 
 // UpdateFinishTime mocks base method.
@@ -523,20 +524,6 @@ func (m *MockStore) UpdateLift(arg0 context.Context, arg1 db.UpdateLiftParams) (
 func (mr *MockStoreMockRecorder) UpdateLift(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLift", reflect.TypeOf((*MockStore)(nil).UpdateLift), arg0, arg1)
-}
-
-// UpdateMuscleGroup mocks base method.
-func (m *MockStore) UpdateMuscleGroup(arg0 context.Context, arg1 db.UpdateMuscleGroupParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMuscleGroup", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateMuscleGroup indicates an expected call of UpdateMuscleGroup.
-func (mr *MockStoreMockRecorder) UpdateMuscleGroup(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMuscleGroup", reflect.TypeOf((*MockStore)(nil).UpdateMuscleGroup), arg0, arg1)
 }
 
 // UpdateWeight mocks base method.
