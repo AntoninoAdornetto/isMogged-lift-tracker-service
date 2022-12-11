@@ -24,15 +24,13 @@ ORDER BY name
 LIMIT $2
 OFFSET $3;
 
--- name: UpdateExerciseName :exec
+-- name: UpdateExercise :one
 UPDATE exercise SET
-name = ($1)
-WHERE name = ($2) RETURNING *;
-
--- name: UpdateMuscleGroup :exec
-UPDATE exercise SET
-muscle_group = ($1)
-WHERE name = ($2) RETURNING *;
+name = COALESCE(NULLIF($1, ''), name),
+muscle_group = COALESCE(NULLIF($2, ''), muscle_group),
+category = COALESCE(NULLIF($3, ''), category)
+WHERE name = $4
+RETURNING *;
 
 -- name: DeleteExercise :exec
 DELETE FROM exercise WHERE name = ($1);
