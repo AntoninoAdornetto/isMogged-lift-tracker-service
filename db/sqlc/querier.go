@@ -40,11 +40,10 @@ type Querier interface {
 	ListPRsByMuscleGroup(ctx context.Context, arg ListPRsByMuscleGroupParams) ([]ListPRsByMuscleGroupRow, error)
 	ListWorkouts(ctx context.Context, arg ListWorkoutsParams) ([]Workout, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
-	UpdateExerciseName(ctx context.Context, arg UpdateExerciseNameParams) error
+	UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (Exercise, error)
 	UpdateFinishTime(ctx context.Context, arg UpdateFinishTimeParams) (Workout, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (MuscleGroup, error)
 	UpdateLift(ctx context.Context, arg UpdateLiftParams) (Lift, error)
-	UpdateMuscleGroup(ctx context.Context, arg UpdateMuscleGroupParams) error
 	UpdateWeight(ctx context.Context, arg UpdateWeightParams) error
 }
 
