@@ -2,50 +2,105 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-var repRange = int32(6)
-var weightRange = float32(100)
+var muscleGroups = [7]string{"Chest", "Back", "Shoulders", "Legs", "Calves", "Biceps", "Triceps"}
+var categories = [5]string{"Barbell", "Dumbbell", "Cable", "Machine", "Calisthenics"}
 
-func TestCreateNewLift(t *testing.T) {
-	store := NewStore(testDB)
+type JSONExerciseInfo struct {
+	Name        string
+	MuscleGroup string
+	Category    string
+}
 
-	n := 3
-	acc := GenerateRandAccount(t)
-	ex := CreateRandomExercise(t)
+type JSONCreateExercise struct {
+	Exercises []JSONExerciseInfo
+}
 
-	errs := make(chan error)
-	results := make(chan CreateNewLiftRes)
+func createRealExercises() JSONCreateExercise {
+	root := "../../"
+	filePath := filepath.Join(root, "exercises.json")
 
-	for i := 0; i < n; i++ {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
 
-		go func() {
-			res, err := store.CreateNewLift(context.Background(), CreateNewLiftReq{
-				ExerciseName: ex.ExerciseName,
-				Reps:         repRange,
-				Weight:       weightRange,
-				UserID:       acc.ID,
+	var exercises JSONCreateExercise
+	err = json.Unmarshal(data, &exercises)
+	if err != nil {
+		panic(err)
+	}
+
+	return exercises
+}
+
+type JSONLift struct {
+	ExerciseName string
+	Reps         int16
+	WeightLifted float32
+}
+
+type JSONCreateLift struct {
+	Lifts []JSONLift
+}
+
+func createRealLifts() JSONCreateLift {
+	root := "../../"
+	filePath := filepath.Join(root, "lifts.json")
+
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	var lifts JSONCreateLift
+	err = json.Unmarshal(data, &lifts)
+	if err != nil {
+		panic(err)
+	}
+
+	return lifts
+}
+
+func setData(t *testing.T) {
+	exercises := createRealExercises().Exercises
+	for _, v := range muscleGroups {
+		_, _ = testQueries.CreateMuscleGroup(context.Background(), v)
+	}
+
+	for _, v := range categories {
+		_, _ = testQueries.CreateCategory(context.Background(), v)
+	}
+
+	for _, v := range exercises {
+		_, _ = testQueries.CreateExercise(context.Background(), CreateExerciseParams{
+			Name:        v.Name,
+			Category:    v.Category,
+			MuscleGroup: v.MuscleGroup,
+		})
+	}
+
+	defer func() {
+		workout := GenerateRandWorkout(t)
+		lifts := createRealLifts().Lifts
+
+		for _, v := range lifts {
+			testQueries.CreateLift(context.Background(), CreateLiftParams{
+				WorkoutID:    workout.ID,
+				ExerciseName: v.ExerciseName,
+				Reps:         v.Reps,
+				WeightLifted: v.WeightLifted,
+				UserID:       workout.UserID,
 			})
+		}
+	}()
+}
 
-			errs <- err
-			results <- res
-		}()
-	}
-
-	for i := 0; i < n; i++ {
-		err := <-errs
-		require.NoError(t, err)
-
-		res := <-results
-		require.NotEmpty(t, res)
-		require.Equal(t, ex.ExerciseName, res.Lift.ExerciseName)
-		require.Equal(t, repRange, res.Lift.Reps)
-		require.Equal(t, weightRange, res.Lift.Weight)
-		require.Equal(t, acc.ID, res.Lift.UserID)
-		require.NotNil(t, res.SetId)
-	}
-	store.DeleteAccount(context.Background(), acc.ID)
+func TestJSONWorkoutData(t *testing.T) {
+	setData(t)
 }
