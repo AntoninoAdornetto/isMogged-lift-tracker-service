@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -119,13 +120,16 @@ func (server *Server) getMuscleGroupExercises(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, exercises)
 }
 
-type updateExerciseNameReq struct {
-	Name string `json:"name" binding:"required"`
+type updateExerciseReq struct {
+	Name        string `json:"name"`
+	MuscleGroup string `json:"muscle_group"`
+	Category    string `json:"category"`
 }
 
-func (server *Server) updateExerciseName(ctx *gin.Context) {
-	var req updateExerciseNameReq
+func (server *Server) updateExercise(ctx *gin.Context) {
+	var req updateExerciseReq
 	var uri getExerciseReq
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -136,49 +140,25 @@ func (server *Server) updateExerciseName(ctx *gin.Context) {
 		return
 	}
 
-	args := db.UpdateExerciseNameParams{
-		Name:   req.Name,
-		Name_2: uri.Name,
+	args := db.UpdateExerciseParams{
+		Name:    uri.Name,
+		Column1: req.Name,
+		Column2: req.MuscleGroup,
+		Column3: req.Category,
 	}
 
-	err := server.store.UpdateExerciseName(ctx, args)
+	patch, err := server.store.UpdateExercise(context.Background(), args)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusNoContent, nil)
-}
-
-type updateExerciseMuscleGroupReq struct {
-	MuscleGroup string `json:"muscle_group" binding:"required"`
-}
-
-func (server *Server) updateExerciseMuscleGroup(ctx *gin.Context) {
-	var req updateExerciseMuscleGroupReq
-	var uri getExerciseReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	if err := ctx.ShouldBindUri(&uri); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	args := db.UpdateMuscleGroupParams{
-		MuscleGroup: req.MuscleGroup,
-		Name:        uri.Name,
-	}
-
-	err := server.store.UpdateMuscleGroup(ctx, args)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	ctx.JSON(http.StatusNoContent, nil)
+	ctx.JSON(http.StatusOK, patch)
 }
 
 func (server *Server) deleteExercise(ctx *gin.Context) {
