@@ -78,36 +78,27 @@ func TestListByMuscleGroup(t *testing.T) {
 	}
 }
 
-func TestUpdateExerciseName(t *testing.T) {
+func TestUpdateExercise(t *testing.T) {
 	exercise := GenerateRandomExercise(t)
-	newName := util.RandomString(10)
+	newExerciseName := util.RandomString(10)
+	newCategory := GenerateRandomCategory(t)
+	newMuscleGroup := GenerateRandMuscleGroup(t)
 
-	err := testQueries.UpdateExerciseName(context.Background(), UpdateExerciseNameParams{
-		Name:   newName,
-		Name_2: exercise.Name,
+	patch, err := testQueries.UpdateExercise(context.Background(), UpdateExerciseParams{
+		Name:    exercise.Name,
+		Column1: newExerciseName,
+		Column2: newMuscleGroup.Name,
+		Column3: newCategory.Name,
 	})
 	require.NoError(t, err)
+	require.Equal(t, newExerciseName, patch.Name)
+	require.Equal(t, newCategory.Name, patch.Category)
+	require.Equal(t, newMuscleGroup.Name, patch.MuscleGroup)
+	require.Equal(t, exercise.ID, patch.ID)
 
-	query, err := testQueries.GetExercise(context.Background(), newName)
-	require.NoError(t, err)
-	require.NotEmpty(t, query)
-	require.Equal(t, newName, query.Name)
-}
-
-func TestUpdateExerciseMuscleGroup(t *testing.T) {
-	patchMuscleGroup := GenerateRandMuscleGroup(t)
-	exercise := GenerateRandomExercise(t)
-
-	err := testQueries.UpdateMuscleGroup(context.Background(), UpdateMuscleGroupParams{
-		MuscleGroup: patchMuscleGroup.Name,
-		Name:        exercise.Name,
-	})
-	require.NoError(t, err)
-
-	query, err := testQueries.GetExercise(context.Background(), exercise.Name)
-	require.NoError(t, err)
-	require.NotEmpty(t, query)
-	require.Equal(t, patchMuscleGroup.Name, query.MuscleGroup)
+	require.NotEqual(t, exercise.Name, patch.Name)
+	require.NotEqual(t, exercise.Category, patch.Category)
+	require.NotEqual(t, exercise.MuscleGroup, patch.MuscleGroup)
 }
 
 func TestDeleteExercise(t *testing.T) {
