@@ -523,22 +523,22 @@ func createMuscleGroupExercises() ([]db.Exercise, string) {
 	return exercises, mg
 }
 
-func validateExerciseResponse(t *testing.T, body *bytes.Buffer, category db.Exercise) {
+func validateExerciseResponse(t *testing.T, body *bytes.Buffer, exercise db.Exercise) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 
 	var resExercise db.Exercise
 	err = json.Unmarshal(data, &resExercise)
 	require.NoError(t, err)
-	require.Equal(t, category, resExercise)
+	require.Equal(t, exercise, resExercise)
 }
 
-func validateExercisesResponse(t *testing.T, body *bytes.Buffer, category []db.Exercise) {
+func validateExercisesResponse(t *testing.T, body *bytes.Buffer, exercise []db.Exercise) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 
 	var resExercises []db.Exercise
 	err = json.Unmarshal(data, &resExercises)
 	require.NoError(t, err)
-	require.Equal(t, category, resExercises)
+	require.Equal(t, exercise, resExercises)
 }
