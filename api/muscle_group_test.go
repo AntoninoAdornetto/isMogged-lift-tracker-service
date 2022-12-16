@@ -106,7 +106,6 @@ func TestGetMuscleGroup(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
-				validateMuscleGroupResponse(t, recorder.Body, muscleGroup)
 			},
 		},
 	}
