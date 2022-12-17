@@ -31,5 +31,8 @@ fmt:
 run-dev:
 	go run main.go
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev 
+stub:
+	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/lift_tracker/db/sqlc Store
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev stub
 

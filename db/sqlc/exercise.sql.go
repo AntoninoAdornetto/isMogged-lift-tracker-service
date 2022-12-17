@@ -145,34 +145,35 @@ func (q *Queries) ListExercises(ctx context.Context, arg ListExercisesParams) ([
 	return items, nil
 }
 
-const updateExerciseName = `-- name: UpdateExerciseName :exec
+const updateExercise = `-- name: UpdateExercise :one
 UPDATE exercise SET
-name = ($1)
-WHERE name = ($2) RETURNING id, name, muscle_group, category
+name = COALESCE(NULLIF($1, ''), name),
+muscle_group = COALESCE(NULLIF($2, ''), muscle_group),
+category = COALESCE(NULLIF($3, ''), category)
+WHERE name = $4
+RETURNING id, name, muscle_group, category
 `
 
-type UpdateExerciseNameParams struct {
-	Name   string `json:"name"`
-	Name_2 string `json:"name_2"`
+type UpdateExerciseParams struct {
+	Column1 interface{} `json:"column_1"`
+	Column2 interface{} `json:"column_2"`
+	Column3 interface{} `json:"column_3"`
+	Name    string      `json:"name"`
 }
 
-func (q *Queries) UpdateExerciseName(ctx context.Context, arg UpdateExerciseNameParams) error {
-	_, err := q.db.ExecContext(ctx, updateExerciseName, arg.Name, arg.Name_2)
-	return err
-}
-
-const updateMuscleGroup = `-- name: UpdateMuscleGroup :exec
-UPDATE exercise SET
-muscle_group = ($1)
-WHERE name = ($2) RETURNING id, name, muscle_group, category
-`
-
-type UpdateMuscleGroupParams struct {
-	MuscleGroup string `json:"muscle_group"`
-	Name        string `json:"name"`
-}
-
-func (q *Queries) UpdateMuscleGroup(ctx context.Context, arg UpdateMuscleGroupParams) error {
-	_, err := q.db.ExecContext(ctx, updateMuscleGroup, arg.MuscleGroup, arg.Name)
-	return err
+func (q *Queries) UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (Exercise, error) {
+	row := q.db.QueryRowContext(ctx, updateExercise,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Name,
+	)
+	var i Exercise
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.MuscleGroup,
+		&i.Category,
+	)
+	return i, err
 }

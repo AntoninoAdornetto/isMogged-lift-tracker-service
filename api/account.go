@@ -7,6 +7,7 @@ import (
 	"time"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -32,7 +33,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		Password:  req.Password,
 		Weight:    req.Weight,
 		BodyFat:   req.BodyFat,
-		StartDate: time.Now(),
+		StartDate: util.FormatMSEpoch(time.Now().UnixMilli()),
 	}
 
 	account, err := server.store.CreateAccount(ctx, args)

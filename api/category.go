@@ -58,7 +58,7 @@ func (server *Server) getCategory(ctx *gin.Context) {
 func (server *Server) listCategories(ctx *gin.Context) {
 	categories, err := server.store.ListCategories(context.Background())
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 

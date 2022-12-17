@@ -6,11 +6,11 @@ import (
 )
 
 type Server struct {
-	store  *db.Store
+	store  db.Store
 	router *gin.Engine
 }
 
-func NewServer(store *db.Store) *Server {
+func NewServer(store db.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
 
@@ -35,8 +35,7 @@ func NewServer(store *db.Store) *Server {
 	router.GET("/exercise/:name", server.getExercise)
 	router.GET("/exercise", server.listExercises)
 	router.GET("/exercise/group/:muscle_group", server.getMuscleGroupExercises)
-	router.PATCH("/exercise/:name", server.updateExerciseName)
-	router.PATCH("/exercise/:name/group", server.updateExerciseMuscleGroup)
+	router.PATCH("/exercise/:name", server.updateExercise)
 	router.DELETE("/exercise/:name", server.deleteExercise)
 
 	router.POST("/workout/:user_id", server.createWorkout)
