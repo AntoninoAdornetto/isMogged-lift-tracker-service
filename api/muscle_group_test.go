@@ -33,7 +33,7 @@ func TestCreateMuscleGroup(t *testing.T) {
 				"name": muscleGroup.Name,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Return(muscleGroup, nil)
+				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -45,7 +45,7 @@ func TestCreateMuscleGroup(t *testing.T) {
 				"name": muscleGroup.Name,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Return(db.MuscleGroup{}, sql.ErrConnDone)
+				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(db.MuscleGroup{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -92,7 +92,7 @@ func TestGetMuscleGroup(t *testing.T) {
 			name:        "OK",
 			muscleGroup: muscleGroup.Name,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Return(muscleGroup, nil)
+				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -102,7 +102,7 @@ func TestGetMuscleGroup(t *testing.T) {
 			name:        "InternalError",
 			muscleGroup: muscleGroup.Name,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Return(db.MuscleGroup{}, sql.ErrConnDone)
+				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(db.MuscleGroup{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -143,7 +143,7 @@ func TestListMuscleGroups(t *testing.T) {
 		{
 			name: "OK",
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetMuscleGroups(gomock.Any()).Return(muscleGroups, nil)
+				store.EXPECT().GetMuscleGroups(gomock.Any()).Times(1).Return(muscleGroups, nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -153,7 +153,7 @@ func TestListMuscleGroups(t *testing.T) {
 		{
 			name: "InternalError",
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetMuscleGroups(gomock.Any()).Return([]db.MuscleGroup{}, sql.ErrConnDone)
+				store.EXPECT().GetMuscleGroups(gomock.Any()).Times(1).Return([]db.MuscleGroup{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -196,7 +196,7 @@ func TestDeleteMuscleGroup(t *testing.T) {
 			name:        "OK",
 			muscleGroup: muscleGroup.Name,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().DeleteGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Return(muscleGroup, nil)
+				store.EXPECT().DeleteGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
