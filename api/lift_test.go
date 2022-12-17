@@ -601,7 +601,7 @@ func TestDeleteLift(t *testing.T) {
 			name:   "OK-Deleted",
 			liftID: lift.ID,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().DeleteLift(gomock.Any(), gomock.Eq(lift.ID)).Return(nil)
+				store.EXPECT().DeleteLift(gomock.Any(), gomock.Eq(lift.ID)).Times(1).Return(nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNoContent, recorder.Code)
