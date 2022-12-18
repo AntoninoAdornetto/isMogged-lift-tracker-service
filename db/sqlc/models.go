@@ -5,20 +5,20 @@
 package db
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Account struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	Weight    float32   `json:"weight"`
-	BodyFat   float32   `json:"body_fat"`
-	StartDate time.Time `json:"start_date"`
+	ID                uuid.UUID `json:"id"`
+	Name              string    `json:"name"`
+	Email             string    `json:"email"`
+	Password          string    `json:"password"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	Weight            float32   `json:"weight"`
+	BodyFat           float32   `json:"body_fat"`
+	StartDate         time.Time `json:"start_date"`
 }
 
 type Category struct {
@@ -52,9 +52,4 @@ type Workout struct {
 	StartTime  time.Time `json:"start_time"`
 	FinishTime time.Time `json:"finish_time"`
 	UserID     uuid.UUID `json:"user_id"`
-}
-
-type WorkoutJson struct {
-	WorkoutID   uuid.UUID       `json:"workout_id"`
-	WorkoutJson json.RawMessage `json:"workout_json"`
 }
