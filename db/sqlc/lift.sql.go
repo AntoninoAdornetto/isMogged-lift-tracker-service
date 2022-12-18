@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createLift = `-- name: CreateLift :one
@@ -50,6 +51,67 @@ func (q *Queries) CreateLift(ctx context.Context, arg CreateLiftParams) (Lift, e
 		&i.WorkoutID,
 	)
 	return i, err
+}
+
+const createLifts = `-- name: CreateLifts :many
+INSERT INTO lift (
+  exercise_name,
+  weight_lifted,
+  reps,
+  user_id,
+  workout_id
+) VALUES (
+  UNNEST($1::VARCHAR[]),
+  UNNEST($2::REAL[]),
+  UNNEST($3::SMALLINT[]),
+  UNNEST($4::UUID[]),
+  UNNEST($5::UUID[])
+)
+RETURNING id, exercise_name, weight_lifted, reps, user_id, workout_id
+`
+
+type CreateLiftsParams struct {
+	Exercisenames []string    `json:"exercisenames"`
+	Weights       []float32   `json:"weights"`
+	Reps          []int16     `json:"reps"`
+	UserID        []uuid.UUID `json:"user_id"`
+	WorkoutID     []uuid.UUID `json:"workout_id"`
+}
+
+func (q *Queries) CreateLifts(ctx context.Context, arg CreateLiftsParams) ([]Lift, error) {
+	rows, err := q.db.QueryContext(ctx, createLifts,
+		pq.Array(arg.Exercisenames),
+		pq.Array(arg.Weights),
+		pq.Array(arg.Reps),
+		pq.Array(arg.UserID),
+		pq.Array(arg.WorkoutID),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Lift{}
+	for rows.Next() {
+		var i Lift
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExerciseName,
+			&i.WeightLifted,
+			&i.Reps,
+			&i.UserID,
+			&i.WorkoutID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const deleteLift = `-- name: DeleteLift :exec
