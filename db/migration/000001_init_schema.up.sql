@@ -5,6 +5,7 @@ CREATE TABLE "accounts" (
   "name" VARCHAR NOT NULL,
   "email" VARCHAR NOT NULL UNIQUE,
   "password" VARCHAR NOT NULL,
+  "password_changed_at" TIMESTAMP NOT NULL DEFAULT '0001-01-01 00:00:00Z',
   "weight" REAL NOT NULL DEFAULT 0.0,
   "body_fat" REAL NOT NULL DEFAULT 0.0,
   "start_date" date NOT NULL DEFAULT NOW() 
@@ -24,7 +25,7 @@ CREATE TABLE "exercise" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR NOT NULL UNIQUE,
   "muscle_group" VARCHAR NOT NULL REFERENCES muscle_group(name) ON DELETE CASCADE ON UPDATE CASCADE,
-  "category" VARCHAR NOT NULL REFERENCES category(name)
+  "category" VARCHAR NOT NULL REFERENCES category(name) ON DELETE CASCADE
 );
 
 CREATE TABLE "workout" (
@@ -43,10 +44,10 @@ CREATE TABLE "lift" (
   "workout_id" uuid NOT NULL REFERENCES workout(id) ON DELETE CASCADE
 );
 
-CREATE TABLE "workout_json" (
-  workout_id uuid NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
-  workout_json jsonb NOT NULL
-);
+/* CREATE TABLE "workout_json" ( */
+/*   workout_id uuid NOT NULL REFERENCES workout(id) ON DELETE CASCADE, */
+/*   workout_json jsonb NOT NULL */
+/* ); */
 
 CREATE INDEX ON "accounts" ("id");
 CREATE INDEX ON "exercise" ("name");
