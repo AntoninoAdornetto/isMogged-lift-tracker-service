@@ -18,7 +18,7 @@ type liftPaginationReq struct {
 type createLiftReq struct {
 	ExersiseName string  `json:"exercise_name" binding:"required"`
 	Weight       float32 `json:"weight" binding:"required"`
-	Reps         int32   `json:"reps" binding:"required"`
+	Reps         int16   `json:"reps" binding:"required"`
 	UserId       string  `json:"user_id" binding:"required"`
 	WorkoutID    string  `json:"workout_id" binding:"required"`
 }
@@ -45,7 +45,7 @@ func (server *Server) createLift(ctx *gin.Context) {
 	args := db.CreateLiftParams{
 		ExerciseName: req.ExersiseName,
 		WeightLifted: req.Weight,
-		Reps:         int16(req.Reps),
+		Reps:         req.Reps,
 		UserID:       userId,
 		WorkoutID:    workoutId,
 	}
@@ -57,6 +57,66 @@ func (server *Server) createLift(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, lift)
+}
+
+type createLiftsReq struct {
+	ExersiseName []string  `json:"exercise_name" binding:"required"`
+	Weight       []float32 `json:"weight" binding:"required"`
+	Reps         []int16   `json:"reps" binding:"required"`
+}
+
+type getWorkoutUser struct {
+	WorkoutID string `uri:"workout_id" binding:"required"`
+	UserID    string `uri:"user_id" binding:"required"`
+}
+
+func (server *Server) createLifts(ctx *gin.Context) {
+	var req createLiftsReq
+	var uri getWorkoutUser
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userID, err := uuid.Parse(uri.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	workoutID, err := uuid.Parse(uri.WorkoutID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	tLen := len(req.Reps)
+	userIDS, workoutIDS := make([]uuid.UUID, tLen), make([]uuid.UUID, tLen)
+
+	for i := 0; i < tLen; i++ {
+		userIDS[i] = userID
+		workoutIDS[i] = workoutID
+	}
+
+	lifts, err := server.store.CreateLifts(ctx, db.CreateLiftsParams{
+		Exercisenames: req.ExersiseName,
+		Reps:          req.Reps,
+		Weights:       req.Weight,
+		UserID:        userIDS,
+		WorkoutID:     workoutIDS,
+	})
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, lifts)
 }
 
 type getLiftReq struct {
