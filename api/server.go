@@ -45,6 +45,7 @@ func NewServer(store db.Store) *Server {
 	router.DELETE("/workout/:workout_id", server.deleteWorkout)
 
 	router.POST("/lift", server.createLift)
+	router.POST("/lift/:workout_id/:user_id", server.createLifts)
 	router.GET("/lift/:id/:user_id", server.getLift)
 	router.GET("/lift/history/:user_id", server.listLifts)
 	router.GET("/lift/history/pr/:order_by/:user_id", server.listPRs)
