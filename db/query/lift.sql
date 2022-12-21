@@ -10,6 +10,24 @@ INSERT INTO lift (
 )
 RETURNING *;
 
+-- name: CreateLifts :many
+INSERT INTO lift (
+  exercise_name,
+  weight_lifted,
+  reps,
+  user_id,
+  workout_id
+) VALUES (
+  UNNEST(@exerciseNames::VARCHAR[]),
+  UNNEST(@weights::REAL[]),
+  UNNEST(@reps::SMALLINT[]),
+  UNNEST(@user_id::UUID[]),
+  UNNEST(@workout_id::UUID[])
+)
+RETURNING *;
+
+
+
 -- name: GetLift :one
 SELECT * FROM lift
 WHERE user_id = $1

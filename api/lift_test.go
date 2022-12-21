@@ -119,6 +119,81 @@ func TestCreateLift(t *testing.T) {
 	}
 }
 
+func TestCreateLifts(t *testing.T) {
+	args, lifts := generateCompleteWorkoutLifts()
+
+	testCases := []struct {
+		name       string
+		body       gin.H
+		buildStubs func(store *mockdb.MockStore)
+		checkRes   func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			body: gin.H{
+				"exercise_name": args.Exercisenames,
+				"weight":        args.Weights,
+				"reps":          args.Reps,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateLifts(gomock.Any(), gomock.Eq(args)).Times(1).Return(lifts, nil)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recorder.Code)
+				validateLiftsResponse(t, recorder.Body, lifts)
+			},
+		},
+		{
+			name: "BadRequest",
+			body: gin.H{},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateLifts(gomock.Any(), gomock.Any()).Times(0).Return([]db.Lift{}, sql.ErrConnDone)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "InternalError",
+			body: gin.H{
+				"exercise_name": args.Exercisenames,
+				"weight":        args.Weights,
+				"reps":          args.Reps,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateLifts(gomock.Any(), gomock.Eq(args)).Times(1).Return([]db.Lift{}, sql.ErrConnDone)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
+
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
+
+			data, err := json.Marshal(tc.body)
+			require.NoError(t, err)
+
+			url := fmt.Sprintf("/lift/%s/%s", lifts[0].WorkoutID, lifts[0].UserID)
+			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, req)
+			tc.checkRes(recorder)
+		})
+	}
+}
+
 func TestGetLift(t *testing.T) {
 	lift := generateRandLift()
 
@@ -642,8 +717,43 @@ func generateRandLift() db.Lift {
 	}
 }
 
+func generateCompleteWorkoutLifts() (db.CreateLiftsParams, []db.Lift) {
+
+	n := 5
+	userID := uuid.New()
+	workoutID := uuid.New()
+	lifts := make([]db.Lift, n)
+	createLiftsArgs := db.CreateLiftsParams{
+		Exercisenames: make([]string, n),
+		Weights:       make([]float32, n),
+		Reps:          make([]int16, n),
+		UserID:        make([]uuid.UUID, n),
+		WorkoutID:     make([]uuid.UUID, n),
+	}
+
+	for i := 0; i < n; i++ {
+		createLiftsArgs.Exercisenames[i] = util.RandomString(5)
+		createLiftsArgs.Weights[i] = float32(util.RandomInt(100, 220))
+		createLiftsArgs.Reps[i] = int16(util.RandomInt(6, 12))
+		createLiftsArgs.UserID[i] = userID
+		createLiftsArgs.WorkoutID[i] = workoutID
+
+		lifts[i] = db.Lift{
+			ExerciseName: createLiftsArgs.Exercisenames[i],
+			Reps:         createLiftsArgs.Reps[i],
+			WeightLifted: createLiftsArgs.Weights[i],
+			WorkoutID:    createLiftsArgs.WorkoutID[i],
+			UserID:       createLiftsArgs.UserID[i],
+			ID:           uuid.New(),
+		}
+	}
+
+	return createLiftsArgs, lifts
+}
+
 func generateRandLifts() []db.Lift {
 	userID := uuid.New()
+	workoutID := uuid.New()
 	n := 5
 	lifts := make([]db.Lift, n)
 	for i := 0; i < n; i++ {
@@ -653,7 +763,7 @@ func generateRandLifts() []db.Lift {
 			WeightLifted: float32(util.RandomInt(100, 200)),
 			Reps:         int16(util.RandomInt(5, 12)),
 			UserID:       userID,
-			WorkoutID:    uuid.New(),
+			WorkoutID:    workoutID,
 		}
 	}
 	return lifts

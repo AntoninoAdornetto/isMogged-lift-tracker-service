@@ -15,6 +15,7 @@ type Querier interface {
 	CreateCategory(ctx context.Context, name string) (Category, error)
 	CreateExercise(ctx context.Context, arg CreateExerciseParams) (Exercise, error)
 	CreateLift(ctx context.Context, arg CreateLiftParams) (Lift, error)
+	CreateLifts(ctx context.Context, arg CreateLiftsParams) ([]Lift, error)
 	CreateMuscleGroup(ctx context.Context, name string) (MuscleGroup, error)
 	CreateWorkout(ctx context.Context, arg CreateWorkoutParams) (Workout, error)
 	DeleteAccount(ctx context.Context, id uuid.UUID) (Account, error)
