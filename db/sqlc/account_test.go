@@ -41,7 +41,16 @@ func TestGetAccount(t *testing.T) {
 	account := GenerateRandAccount(t)
 	query, err := testQueries.GetAccount(context.Background(), account.ID)
 	require.NoError(t, err)
+	require.NotEmpty(t, query)
+
 	require.Equal(t, account.ID, query.ID)
+	require.Equal(t, account.BodyFat, query.BodyFat)
+	require.Equal(t, account.Weight, query.Weight)
+	require.Equal(t, account.Password, query.Password)
+	require.Equal(t, account.Email, query.Email)
+	require.Equal(t, account.Name, query.Name)
+	require.WithinDuration(t, account.StartDate, query.StartDate, time.Second)
+	require.WithinDuration(t, account.PasswordChangedAt, query.PasswordChangedAt, time.Second)
 }
 
 func TestListAccounts(t *testing.T) {
