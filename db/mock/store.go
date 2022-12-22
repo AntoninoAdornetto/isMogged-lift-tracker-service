@@ -96,6 +96,21 @@ func (mr *MockStoreMockRecorder) CreateLift(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLift", reflect.TypeOf((*MockStore)(nil).CreateLift), arg0, arg1)
 }
 
+// CreateLifts mocks base method.
+func (m *MockStore) CreateLifts(arg0 context.Context, arg1 db.CreateLiftsParams) ([]db.Lift, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLifts", arg0, arg1)
+	ret0, _ := ret[0].([]db.Lift)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateLifts indicates an expected call of CreateLifts.
+func (mr *MockStoreMockRecorder) CreateLifts(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLifts", reflect.TypeOf((*MockStore)(nil).CreateLifts), arg0, arg1)
+}
+
 // CreateMuscleGroup mocks base method.
 func (m *MockStore) CreateMuscleGroup(arg0 context.Context, arg1 string) (db.MuscleGroup, error) {
 	m.ctrl.T.Helper()

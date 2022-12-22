@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/AntoninoAdornetto/lift_tracker/util"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,6 +34,42 @@ func GenerateRandLift(t *testing.T) Lift {
 
 func TestCreateLift(t *testing.T) {
 	GenerateRandLift(t)
+}
+
+func TestCreateLifts(t *testing.T) {
+	n := 5
+
+	allLifts := CreateLiftsParams{
+		Exercisenames: make([]string, n),
+		UserID:        make([]uuid.UUID, n),
+		WorkoutID:     make([]uuid.UUID, n),
+		Reps:          make([]int16, n),
+		Weights:       make([]float32, n),
+	}
+
+	workout := GenerateRandWorkout(t)
+
+	for i := 0; i < n; i++ {
+		ex := GenerateRandomExercise(t)
+
+		allLifts.UserID[i] = workout.UserID
+		allLifts.WorkoutID[i] = workout.ID
+		allLifts.Reps[i] = int16(util.RandomInt(6, 12))
+		allLifts.Weights[i] = float32(util.RandomInt(100, 220))
+		allLifts.Exercisenames[i] = ex.Name
+	}
+
+	lifts, err := testQueries.CreateLifts(context.Background(), allLifts)
+	require.NoError(t, err)
+	require.Len(t, lifts, n)
+
+	for i, v := range lifts {
+		require.Equal(t, allLifts.UserID[i], workout.UserID)
+		require.Equal(t, allLifts.WorkoutID[i], workout.ID)
+		require.Equal(t, allLifts.Exercisenames[i], v.ExerciseName)
+		require.Equal(t, allLifts.Weights[i], v.WeightLifted)
+		require.Equal(t, allLifts.Reps[i], v.Reps)
+	}
 }
 
 func TestGetLift(t *testing.T) {
