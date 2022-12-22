@@ -10,11 +10,14 @@ import (
 )
 
 func GenerateRandAccount(t *testing.T) Account {
+	hashedPassword, err := util.HashPassword(util.RandomString(10))
+	require.NoError(t, err)
+
 	args := CreateAccountParams{
 		Name:      util.RandomString(5),
 		StartDate: time.Now(),
 		Email:     util.RandomEmail(),
-		Password:  util.RandomString(15),
+		Password:  hashedPassword,
 		Weight:    float32(util.RandomInt(150, 250)),
 		BodyFat:   float32(util.RandomInt(5, 30)),
 	}
