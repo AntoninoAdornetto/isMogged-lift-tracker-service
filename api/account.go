@@ -16,8 +16,8 @@ import (
 
 type createAccountReq struct {
 	Name     string  `json:"name" binding:"required,min=3"`
-	Email    string  `json:"email" binding:"required"`
-	Password string  `json:"password" binding:"required"`
+	Email    string  `json:"email" binding:"required,email"`
+	Password string  `json:"password" binding:"required,min=6"`
 	Weight   float32 `json:"weight"`
 	BodyFat  float32 `json:"body_fat"`
 }
@@ -29,10 +29,16 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	hashedPassword, err := util.HashPassword(req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	args := db.CreateAccountParams{
 		Name:      req.Name,
 		Email:     req.Email,
-		Password:  req.Password,
+		Password:  hashedPassword,
 		Weight:    req.Weight,
 		BodyFat:   req.BodyFat,
 		StartDate: util.FormatMSEpoch(time.Now().UnixMilli()),
@@ -42,7 +48,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation":
+			case "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 				return
 			}
