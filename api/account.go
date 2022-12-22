@@ -22,7 +22,7 @@ type createAccountReq struct {
 	BodyFat  float32 `json:"body_fat"`
 }
 
-type createAccountRes struct {
+type accountResp struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
@@ -67,7 +67,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	res := createAccountRes{
+	res := accountResp{
 		ID:        account.ID,
 		Name:      account.Name,
 		StartDate: account.StartDate,
@@ -107,7 +107,16 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, account)
+	res := accountResp{
+		ID:        account.ID,
+		Name:      account.Name,
+		StartDate: account.StartDate,
+		BodyFat:   account.BodyFat,
+		Weight:    account.Weight,
+		Email:     account.Email,
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }
 
 type listAccountsReq struct {
@@ -127,13 +136,25 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
 
-	account, err := server.store.ListAccounts(ctx, args)
+	accounts, err := server.store.ListAccounts(ctx, args)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, account)
+	res := make([]accountResp, len(accounts)) 
+	for i, v := range accounts {
+		res[i] = accountResp{
+			Name: v.Name,
+			ID:  v.ID,
+			Email: v.Email,
+			Weight: v.Weight,
+			BodyFat: v.BodyFat,
+			StartDate: v.StartDate,
+		}
+	}
+
+	ctx.JSON(http.StatusOK, accounts)
 }
 
 func (server *Server) deleteAccount(ctx *gin.Context) {
