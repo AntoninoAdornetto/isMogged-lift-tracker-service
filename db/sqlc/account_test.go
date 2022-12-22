@@ -22,12 +22,14 @@ func GenerateRandAccount(t *testing.T) Account {
 	account, err := testQueries.CreateAccount(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
-	require.NotNil(t, account.Name)
-	require.NotNil(t, account.StartDate)
-	require.NotNil(t, account.Email)
-	require.NotNil(t, account.Password)
-	require.NotNil(t, account.Weight)
-	require.NotNil(t, account.BodyFat)
+
+	require.Equal(t, account.Name, args.Name)
+	require.NotZero(t, account.StartDate)
+	require.Equal(t, account.Email, args.Email)
+	require.Equal(t, account.Password, args.Password)
+	require.Equal(t, account.Weight, args.Weight)
+	require.Equal(t, account.BodyFat, args.BodyFat)
+	require.True(t, account.PasswordChangedAt.IsZero())
 	return account
 }
 
