@@ -10,11 +10,14 @@ import (
 )
 
 func GenerateRandAccount(t *testing.T) Account {
+	hashedPassword, err := util.HashPassword(util.RandomString(10))
+	require.NoError(t, err)
+
 	args := CreateAccountParams{
 		Name:      util.RandomString(5),
 		StartDate: time.Now(),
-		Email:     util.RandomString(5) + "@gmail.com",
-		Password:  util.RandomString(15),
+		Email:     util.RandomEmail(),
+		Password:  hashedPassword,
 		Weight:    float32(util.RandomInt(150, 250)),
 		BodyFat:   float32(util.RandomInt(5, 30)),
 	}
@@ -22,12 +25,14 @@ func GenerateRandAccount(t *testing.T) Account {
 	account, err := testQueries.CreateAccount(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
-	require.NotNil(t, account.Name)
-	require.NotNil(t, account.StartDate)
-	require.NotNil(t, account.Email)
-	require.NotNil(t, account.Password)
-	require.NotNil(t, account.Weight)
-	require.NotNil(t, account.BodyFat)
+
+	require.Equal(t, account.Name, args.Name)
+	require.NotZero(t, account.StartDate)
+	require.Equal(t, account.Email, args.Email)
+	require.Equal(t, account.Password, args.Password)
+	require.Equal(t, account.Weight, args.Weight)
+	require.Equal(t, account.BodyFat, args.BodyFat)
+	require.True(t, account.PasswordChangedAt.IsZero())
 	return account
 }
 
@@ -39,7 +44,16 @@ func TestGetAccount(t *testing.T) {
 	account := GenerateRandAccount(t)
 	query, err := testQueries.GetAccount(context.Background(), account.ID)
 	require.NoError(t, err)
+	require.NotEmpty(t, query)
+
 	require.Equal(t, account.ID, query.ID)
+	require.Equal(t, account.BodyFat, query.BodyFat)
+	require.Equal(t, account.Weight, query.Weight)
+	require.Equal(t, account.Password, query.Password)
+	require.Equal(t, account.Email, query.Email)
+	require.Equal(t, account.Name, query.Name)
+	require.WithinDuration(t, account.StartDate, query.StartDate, time.Second)
+	require.WithinDuration(t, account.PasswordChangedAt, query.PasswordChangedAt, time.Second)
 }
 
 func TestListAccounts(t *testing.T) {

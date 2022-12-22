@@ -10,8 +10,14 @@ dropdb:
 migrateup:
 	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose up
 
+migrateup_single:
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose up 1
+
 migratedown:
 	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose down
+
+migratedown_single:
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose down 1
 
 sqlc:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
@@ -34,5 +40,5 @@ run-dev:
 stub:
 	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/lift_tracker/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev stub
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev stub migratedown_single migrateup_single
 

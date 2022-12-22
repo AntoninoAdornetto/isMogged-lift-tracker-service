@@ -23,7 +23,7 @@ INSERT INTO accounts (
 ) VALUES (
   $1, $2, $3, $4, $5, $6
 )
-RETURNING id, name, email, password, weight, body_fat, start_date
+RETURNING id, name, email, password, password_changed_at, weight, body_fat, start_date
 `
 
 type CreateAccountParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.PasswordChangedAt,
 		&i.Weight,
 		&i.BodyFat,
 		&i.StartDate,
@@ -58,7 +59,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 }
 
 const deleteAccount = `-- name: DeleteAccount :one
-DELETE FROM accounts WHERE id = $1 RETURNING id, name, email, password, weight, body_fat, start_date
+DELETE FROM accounts WHERE id = $1 RETURNING id, name, email, password, password_changed_at, weight, body_fat, start_date
 `
 
 func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) (Account, error) {
@@ -69,6 +70,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) (Account, err
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.PasswordChangedAt,
 		&i.Weight,
 		&i.BodyFat,
 		&i.StartDate,
@@ -77,7 +79,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) (Account, err
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, name, email, password, weight, body_fat, start_date FROM accounts
+SELECT id, name, email, password, password_changed_at, weight, body_fat, start_date FROM accounts
 WHERE id = $1 LIMIT 1
 `
 
@@ -89,6 +91,7 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 		&i.Name,
 		&i.Email,
 		&i.Password,
+		&i.PasswordChangedAt,
 		&i.Weight,
 		&i.BodyFat,
 		&i.StartDate,
@@ -97,7 +100,7 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, name, email, password, weight, body_fat, start_date FROM accounts
+SELECT id, name, email, password, password_changed_at, weight, body_fat, start_date FROM accounts
 LIMIT $1
 OFFSET $2
 `
@@ -121,6 +124,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 			&i.Name,
 			&i.Email,
 			&i.Password,
+			&i.PasswordChangedAt,
 			&i.Weight,
 			&i.BodyFat,
 			&i.StartDate,
@@ -141,7 +145,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 const updateWeight = `-- name: UpdateWeight :exec
 UPDATE accounts SET
 weight = $1 WHERE 
-id = $2 RETURNING id, name, email, password, weight, body_fat, start_date
+id = $2 RETURNING id, name, email, password, password_changed_at, weight, body_fat, start_date
 `
 
 type UpdateWeightParams struct {

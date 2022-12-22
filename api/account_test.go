@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/AntoninoAdornetto/lift_tracker/db/mock"
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
@@ -205,7 +206,12 @@ func validateAccountResponse(t *testing.T, body *bytes.Buffer, account db.Accoun
 	var resAccount db.Account
 	err = json.Unmarshal(data, &resAccount)
 	require.NoError(t, err)
-	require.Equal(t, account, resAccount)
+	require.Equal(t, account.ID, resAccount.ID)
+	require.Equal(t, account.Name, resAccount.Name)
+	require.Equal(t, account.Email, resAccount.Email)
+	require.Equal(t, account.Weight, resAccount.Weight)
+	require.Equal(t, account.BodyFat, resAccount.BodyFat)
+	require.WithinDuration(t, account.StartDate, resAccount.StartDate, time.Second)
 }
 
 func validateAccountsResponse(t *testing.T, body *bytes.Buffer, account []db.Account) {
