@@ -22,6 +22,15 @@ type createAccountReq struct {
 	BodyFat  float32 `json:"body_fat"`
 }
 
+type createAccountRes struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Weight    float32   `json:"weight"`
+	BodyFat   float32   `json:"body_fat"`
+	StartDate time.Time `json:"start_date"`
+}
+
 func (server *Server) createAccount(ctx *gin.Context) {
 	var req createAccountReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -58,7 +67,16 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, account)
+	res := createAccountRes{
+		ID:        account.ID,
+		Name:      account.Name,
+		StartDate: account.StartDate,
+		BodyFat:   account.BodyFat,
+		Weight:    account.Weight,
+		Email:     account.Email,
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }
 
 type getAccountReq struct {
