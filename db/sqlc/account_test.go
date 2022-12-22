@@ -13,7 +13,7 @@ func GenerateRandAccount(t *testing.T) Account {
 	args := CreateAccountParams{
 		Name:      util.RandomString(5),
 		StartDate: time.Now(),
-		Email:     util.RandomString(5) + "@gmail.com",
+		Email:     util.RandomEmail(),
 		Password:  util.RandomString(15),
 		Weight:    float32(util.RandomInt(150, 250)),
 		BodyFat:   float32(util.RandomInt(5, 30)),
