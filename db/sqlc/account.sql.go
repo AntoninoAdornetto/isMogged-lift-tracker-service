@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -18,21 +17,19 @@ INSERT INTO accounts (
   email,
   password,
   weight,
-  body_fat,
-  start_date
+  body_fat
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 )
 RETURNING id, name, email, password, password_changed_at, weight, body_fat, start_date
 `
 
 type CreateAccountParams struct {
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	Weight    float32   `json:"weight"`
-	BodyFat   float32   `json:"body_fat"`
-	StartDate time.Time `json:"start_date"`
+	Name     string  `json:"name"`
+	Email    string  `json:"email"`
+	Password string  `json:"password"`
+	Weight   float32 `json:"weight"`
+	BodyFat  float32 `json:"body_fat"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -42,7 +39,6 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.Password,
 		arg.Weight,
 		arg.BodyFat,
-		arg.StartDate,
 	)
 	var i Account
 	err := row.Scan(
