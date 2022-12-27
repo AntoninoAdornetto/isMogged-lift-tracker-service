@@ -4,10 +4,9 @@ INSERT INTO accounts (
   email,
   password,
   weight,
-  body_fat,
-  start_date
+  body_fat
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 )
 RETURNING *;
 

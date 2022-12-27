@@ -14,12 +14,11 @@ func GenerateRandAccount(t *testing.T) Account {
 	require.NoError(t, err)
 
 	args := CreateAccountParams{
-		Name:      util.RandomString(5),
-		StartDate: time.Now(),
-		Email:     util.RandomEmail(),
-		Password:  hashedPassword,
-		Weight:    float32(util.RandomInt(150, 250)),
-		BodyFat:   float32(util.RandomInt(5, 30)),
+		Name:     util.RandomString(5),
+		Email:    util.RandomEmail(),
+		Password: hashedPassword,
+		Weight:   float32(util.RandomInt(150, 250)),
+		BodyFat:  float32(util.RandomInt(5, 30)),
 	}
 
 	account, err := testQueries.CreateAccount(context.Background(), args)

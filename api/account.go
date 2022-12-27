@@ -45,12 +45,11 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	args := db.CreateAccountParams{
-		Name:      req.Name,
-		Email:     req.Email,
-		Password:  hashedPassword,
-		Weight:    req.Weight,
-		BodyFat:   req.BodyFat,
-		StartDate: util.FormatMSEpoch(time.Now().UnixMilli()),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hashedPassword,
+		Weight:   req.Weight,
+		BodyFat:  req.BodyFat,
 	}
 
 	account, err := server.store.CreateAccount(ctx, args)
@@ -142,14 +141,14 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
-	res := make([]accountResp, len(accounts)) 
+	res := make([]accountResp, len(accounts))
 	for i, v := range accounts {
 		res[i] = accountResp{
-			Name: v.Name,
-			ID:  v.ID,
-			Email: v.Email,
-			Weight: v.Weight,
-			BodyFat: v.BodyFat,
+			Name:      v.Name,
+			ID:        v.ID,
+			Email:     v.Email,
+			Weight:    v.Weight,
+			BodyFat:   v.BodyFat,
 			StartDate: v.StartDate,
 		}
 	}
