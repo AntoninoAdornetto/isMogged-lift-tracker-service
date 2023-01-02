@@ -95,6 +95,23 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 	return i, err
 }
 
+const getAccountByEmail = `-- name: GetAccountByEmail :one
+SELECT email, password FROM 
+accounts WHERE email = $1 LIMIT 1
+`
+
+type GetAccountByEmailRow struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) GetAccountByEmail(ctx context.Context, email string) (GetAccountByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByEmail, email)
+	var i GetAccountByEmailRow
+	err := row.Scan(&i.Email, &i.Password)
+	return i, err
+}
+
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, name, email, password, password_changed_at, weight, body_fat, start_date FROM accounts
 LIMIT $1
