@@ -27,6 +27,12 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		store:        store,
 		tokenCreator: tokenCreator,
 	}
+
+	server.buildRoutes()
+	return server, nil
+}
+
+func (server *Server) buildRoutes() {
 	router := gin.Default()
 
 	router.POST("/user/login", server.login)
@@ -72,7 +78,6 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	router.DELETE("/lift/:id", server.deleteLift)
 
 	server.router = router
-	return server, nil
 }
 
 func (server *Server) Start(address string) error {
