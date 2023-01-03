@@ -2,3 +2,4 @@
 .prettierrc
 *.json
 db/sqlc/store_test.go
+prod.env
