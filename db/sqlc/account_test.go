@@ -61,8 +61,11 @@ func TestGetAccountByEmail(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, query)
 
+	require.Equal(t, account.ID, query.ID)
 	require.Equal(t, account.Password, query.Password)
 	require.Equal(t, account.Email, query.Email)
+	require.WithinDuration(t, account.StartDate, query.StartDate, time.Second)
+	require.WithinDuration(t, account.PasswordChangedAt, query.PasswordChangedAt, time.Second)
 }
 
 func TestListAccounts(t *testing.T) {
