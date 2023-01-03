@@ -1,18 +1,41 @@
 package api
 
 import (
+	"fmt"
+
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
+	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config       util.Config
+	store        db.Store
+	tokenCreator token.Maker
+	router       *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	tokenCreator, err := token.NewJWTCreator(config.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create token generator: %w", err)
+	}
+
+	server := &Server{
+		config:       config,
+		store:        store,
+		tokenCreator: tokenCreator,
+	}
+
+	server.buildRoutes()
+	return server, nil
+}
+
+func (server *Server) buildRoutes() {
 	router := gin.Default()
+
+	router.POST("/user/login", server.login)
 
 	router.POST("/accounts", server.createAccount)
 	router.GET("/accounts/:id", server.getAccount)
@@ -55,7 +78,6 @@ func NewServer(store db.Store) *Server {
 	router.DELETE("/lift/:id", server.deleteLift)
 
 	server.router = router
-	return server
 }
 
 func (server *Server) Start(address string) error {

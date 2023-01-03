@@ -25,6 +25,7 @@ type Querier interface {
 	DeleteLift(ctx context.Context, id uuid.UUID) error
 	DeleteWorkout(ctx context.Context, id uuid.UUID) error
 	GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
+	GetAccountByEmail(ctx context.Context, email string) (GetAccountByEmailRow, error)
 	GetCategory(ctx context.Context, id int16) (Category, error)
 	GetExercise(ctx context.Context, name string) (Exercise, error)
 	GetLift(ctx context.Context, arg GetLiftParams) (Lift, error)

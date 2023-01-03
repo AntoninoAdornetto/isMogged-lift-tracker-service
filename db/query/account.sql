@@ -14,6 +14,10 @@ RETURNING *;
 SELECT * FROM accounts
 WHERE id = $1 LIMIT 1;
 
+-- name: GetAccountByEmail :one
+SELECT id, email, password, password_changed_at, start_date FROM 
+accounts WHERE email = $1 LIMIT 1;
+
 -- name: ListAccounts :many
 SELECT * FROM accounts
 LIMIT $1

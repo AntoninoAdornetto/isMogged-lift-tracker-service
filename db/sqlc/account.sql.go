@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -90,6 +91,32 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 		&i.PasswordChangedAt,
 		&i.Weight,
 		&i.BodyFat,
+		&i.StartDate,
+	)
+	return i, err
+}
+
+const getAccountByEmail = `-- name: GetAccountByEmail :one
+SELECT id, email, password, password_changed_at, start_date FROM 
+accounts WHERE email = $1 LIMIT 1
+`
+
+type GetAccountByEmailRow struct {
+	ID                uuid.UUID `json:"id"`
+	Email             string    `json:"email"`
+	Password          string    `json:"password"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	StartDate         time.Time `json:"start_date"`
+}
+
+func (q *Queries) GetAccountByEmail(ctx context.Context, email string) (GetAccountByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByEmail, email)
+	var i GetAccountByEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.PasswordChangedAt,
 		&i.StartDate,
 	)
 	return i, err
