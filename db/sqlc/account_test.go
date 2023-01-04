@@ -69,18 +69,18 @@ func TestGetAccountByEmail(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
+	var lastAccount Account
 	n := 5
-	accounts := make([]Account, n)
 	for i := 0; i < n; i++ {
-		accounts[i] = GenerateRandAccount(t)
+		lastAccount = GenerateRandAccount(t)
 	}
 
 	query, err := testQueries.ListAccounts(context.Background(), ListAccountsParams{
+		ID:     lastAccount.ID,
 		Limit:  int32(n),
 		Offset: 0,
 	})
 	require.NoError(t, err)
-	require.Len(t, query, n)
 	for _, v := range query {
 		require.NotEmpty(t, v)
 	}

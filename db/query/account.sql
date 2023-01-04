@@ -20,8 +20,9 @@ accounts WHERE email = $1 LIMIT 1;
 
 -- name: ListAccounts :many
 SELECT * FROM accounts
-LIMIT $1
-OFFSET $2;
+WHERE id = $1
+LIMIT $2
+OFFSET $3;
 
 -- name: UpdateWeight :exec
 UPDATE accounts SET
