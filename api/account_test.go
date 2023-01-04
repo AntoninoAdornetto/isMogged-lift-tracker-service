@@ -46,7 +46,7 @@ func TestGetAccount(t *testing.T) {
 			},
 		},
 		{
-			name:      "OK",
+			name:      "NotFound",
 			accountID: account.ID,
 			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
 				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
