@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/AntoninoAdornetto/lift_tracker/db/mock"
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
 	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,10 +25,11 @@ func TestCreateExercise(t *testing.T) {
 	exercise := generateRandExercise()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -33,6 +37,9 @@ func TestCreateExercise(t *testing.T) {
 				"name":         exercise.Name,
 				"muscle_group": exercise.MuscleGroup,
 				"category":     exercise.Category,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateExerciseParams{
@@ -50,6 +57,9 @@ func TestCreateExercise(t *testing.T) {
 		{
 			name: "BadRequest",
 			body: gin.H{},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateExerciseParams{
 					Name:        exercise.Name,
@@ -69,6 +79,9 @@ func TestCreateExercise(t *testing.T) {
 				"muscle_group": exercise.MuscleGroup,
 				"category":     exercise.Category,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateExerciseParams{
 					Name:        exercise.Name,
@@ -79,6 +92,27 @@ func TestCreateExercise(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"name":         exercise.Name,
+				"muscle_group": exercise.MuscleGroup,
+				"category":     exercise.Category,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.CreateExerciseParams{
+					Name:        exercise.Name,
+					Category:    exercise.Category,
+					MuscleGroup: exercise.MuscleGroup,
+				}
+				store.EXPECT().CreateExercise(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -103,6 +137,7 @@ func TestCreateExercise(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -113,13 +148,17 @@ func TestGetExercise(t *testing.T) {
 	exercise := generateRandExercise()
 
 	testCases := []struct {
-		name         string
-		exerciseName string
-		buildStubs   func(store *mockdb.MockStore)
-		checkRes     func(recorder *httptest.ResponseRecorder)
+		name          string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		exerciseName  string
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
-			name:         "OK",
+			name: "OK",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			exerciseName: exercise.Name,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(1).Return(exercise, nil)
@@ -132,6 +171,9 @@ func TestGetExercise(t *testing.T) {
 		{
 			name:         "NotFound",
 			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(1).Return(db.Exercise{}, sql.ErrNoRows)
 			},
@@ -142,11 +184,26 @@ func TestGetExercise(t *testing.T) {
 		{
 			name:         "InternalError",
 			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(1).Return(db.Exercise{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:         "Unauthorized",
+			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -168,6 +225,7 @@ func TestGetExercise(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -187,16 +245,20 @@ func TestListExercises(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
 			query: Query{
 				PageID:   1,
 				PageSize: n,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.ListExercisesParams{
@@ -216,6 +278,9 @@ func TestListExercises(t *testing.T) {
 				PageID:   1,
 				PageSize: n,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListExercises(gomock.Any(), gomock.Any()).Times(1).Return([]db.Exercise{}, sql.ErrConnDone)
 			},
@@ -229,11 +294,29 @@ func TestListExercises(t *testing.T) {
 				PageID:   -1,
 				PageSize: 100000,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListExercises(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "InvalidPageID",
+			query: Query{
+				PageID:   -1,
+				PageSize: 100000,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListExercises(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -259,6 +342,7 @@ func TestListExercises(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -275,10 +359,11 @@ func TestListByMuscleGroup(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -286,6 +371,9 @@ func TestListByMuscleGroup(t *testing.T) {
 				PageID:      1,
 				PageSize:    5,
 				MuscleGroup: muscleGroup,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.ListByMuscleGroupParams{
@@ -307,6 +395,9 @@ func TestListByMuscleGroup(t *testing.T) {
 				PageSize:    5,
 				MuscleGroup: muscleGroup,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListByMuscleGroup(gomock.Any(), gomock.Any()).Times(1).Return([]db.Exercise{}, sql.ErrConnDone)
 			},
@@ -321,11 +412,30 @@ func TestListByMuscleGroup(t *testing.T) {
 				PageSize:    5,
 				MuscleGroup: muscleGroup,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListByMuscleGroup(gomock.Any(), gomock.Any()).Times(0)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			query: Query{
+				PageID:      -10000,
+				PageSize:    5,
+				MuscleGroup: muscleGroup,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListByMuscleGroup(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -352,6 +462,7 @@ func TestListByMuscleGroup(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -368,10 +479,11 @@ func TestUpdateExercise(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -379,6 +491,9 @@ func TestUpdateExercise(t *testing.T) {
 				"name":         shiftExercise.Name,
 				"muscle_group": shiftExercise.MuscleGroup,
 				"category":     shiftExercise.Category,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateExerciseParams{
@@ -401,6 +516,9 @@ func TestUpdateExercise(t *testing.T) {
 				"muscle_group": shiftExercise.MuscleGroup,
 				"category":     shiftExercise.Category,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateExerciseParams{
 					Name:    srcExercise.Name,
@@ -412,6 +530,28 @@ func TestUpdateExercise(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"name":         shiftExercise.Name,
+				"muscle_group": shiftExercise.MuscleGroup,
+				"category":     shiftExercise.Category,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateExerciseParams{
+					Name:    srcExercise.Name,
+					Column1: shiftExercise.Name,
+					Column2: shiftExercise.MuscleGroup,
+					Column3: shiftExercise.Category,
+				}
+				store.EXPECT().UpdateExercise(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -435,6 +575,7 @@ func TestUpdateExercise(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -445,14 +586,18 @@ func TestDeleteExercise(t *testing.T) {
 	exercise := generateRandExercise()
 
 	testCases := []struct {
-		name         string
-		exerciseName string
-		buildStubs   func(store *mockdb.MockStore)
-		checkRes     func(recorder *httptest.ResponseRecorder)
+		name          string
+		exerciseName  string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:         "OK",
 			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(1).Return(nil)
 			},
@@ -463,11 +608,26 @@ func TestDeleteExercise(t *testing.T) {
 		{
 			name:         "InternalError",
 			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(1).Return(sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:         "Unauthorized",
+			exerciseName: exercise.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().DeleteExercise(gomock.Any(), gomock.Eq(exercise.Name)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -488,17 +648,11 @@ func TestDeleteExercise(t *testing.T) {
 			req, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
 	}
-}
-
-func updateExercise(src *db.Exercise, shift db.Exercise) (*db.Exercise, db.Exercise) {
-	var orignalVals db.Exercise
-	orignalVals = *src
-	*src = shift
-	return src, orignalVals
 }
 
 func generateRandExercise() db.Exercise {
