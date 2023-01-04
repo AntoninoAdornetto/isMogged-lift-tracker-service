@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/AntoninoAdornetto/lift_tracker/db/mock"
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
 	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,15 +25,19 @@ func TestCreateCategory(t *testing.T) {
 	category := generateRandCategory()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
 			body: gin.H{
 				"name": category.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateCategory(gomock.Any(), gomock.Eq(category.Name)).Times(1).Return(category, nil)
@@ -43,6 +50,9 @@ func TestCreateCategory(t *testing.T) {
 		{
 			name: "BadRequest",
 			body: gin.H{},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateCategory(gomock.Any(), gomock.Eq(category.Name)).Times(0)
 			},
@@ -55,11 +65,28 @@ func TestCreateCategory(t *testing.T) {
 			body: gin.H{
 				"name": category.Name,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateCategory(gomock.Any(), gomock.Eq(category.Name)).Times(1).Return(db.Category{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"name": category.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateCategory(gomock.Any(), gomock.Eq(category.Name)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -83,6 +110,7 @@ func TestCreateCategory(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -93,14 +121,18 @@ func TestGetCategory(t *testing.T) {
 	category := generateRandCategory()
 
 	testCases := []struct {
-		name       string
-		categoryId int16
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		categoryId    int16
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:       "OK",
 			categoryId: category.ID,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetCategory(gomock.Any(), gomock.Eq(category.ID)).Times(1).Return(category, nil)
 			},
@@ -112,11 +144,26 @@ func TestGetCategory(t *testing.T) {
 		{
 			name:       "InternalError",
 			categoryId: category.ID,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetCategory(gomock.Any(), gomock.Eq(category.ID)).Times(1).Return(db.Category{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name:       "Unauthorized",
+			categoryId: category.ID,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetCategory(gomock.Any(), gomock.Eq(category.ID)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -138,6 +185,7 @@ func TestGetCategory(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -152,12 +200,16 @@ func TestListCategories(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListCategories(gomock.Any()).Times(1).Return(categories, nil)
 			},
@@ -168,11 +220,25 @@ func TestListCategories(t *testing.T) {
 		},
 		{
 			name: "InternalError",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListCategories(gomock.Any()).Times(1).Return([]db.Category{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListCategories(gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -193,6 +259,7 @@ func TestListCategories(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -203,15 +270,19 @@ func TestUpdateCategory(t *testing.T) {
 	category := generateRandCategory()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
 			body: gin.H{
 				"name": category.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateCategoryParams{
@@ -227,6 +298,9 @@ func TestUpdateCategory(t *testing.T) {
 		{
 			name: "BadRequest",
 			body: gin.H{},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateCategory(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -235,9 +309,12 @@ func TestUpdateCategory(t *testing.T) {
 			},
 		},
 		{
-			name: "OK",
+			name: "InternalError",
 			body: gin.H{
 				"name": category.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateCategoryParams{
@@ -248,6 +325,24 @@ func TestUpdateCategory(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"name": category.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateCategoryParams{
+					Name: category.Name,
+					ID:   category.ID,
+				}
+				store.EXPECT().UpdateCategory(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -271,6 +366,7 @@ func TestUpdateCategory(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -281,17 +377,33 @@ func TestDeleteCategory(t *testing.T) {
 	category := generateRandCategory()
 
 	testCases := []struct {
-		name       string
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteCategory(gomock.Any(), gomock.Eq(category.ID)).Times(1).Return(nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNoContent, recorder.Code)
+			},
+		},
+
+		{
+			name: "Unauthorized",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().DeleteCategory(gomock.Any(), gomock.Eq(category.ID)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -312,6 +424,7 @@ func TestDeleteCategory(t *testing.T) {
 			req, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
