@@ -305,7 +305,7 @@ func TestListExercises(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidPageID",
+			name: "Unauthorized",
 			query: Query{
 				PageID:   -1,
 				PageSize: 100000,
