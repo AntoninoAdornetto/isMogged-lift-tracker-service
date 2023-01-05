@@ -124,17 +124,19 @@ func (q *Queries) GetAccountByEmail(ctx context.Context, email string) (GetAccou
 
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, name, email, password, password_changed_at, weight, body_fat, start_date FROM accounts
-LIMIT $1
-OFFSET $2
+WHERE id = $1
+LIMIT $2
+OFFSET $3
 `
 
 type ListAccountsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	ID     uuid.UUID `json:"id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, listAccounts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listAccounts, arg.ID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

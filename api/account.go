@@ -3,11 +3,13 @@ package api
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"time"
 
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
 	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -106,6 +108,13 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.ID != authPayload.UserID {
+		err := errors.New("This account does not belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	res := accountResp{
 		ID:        account.ID,
 		Name:      account.Name,
@@ -130,7 +139,10 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	args := db.ListAccountsParams{
+		ID:     authPayload.UserID,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}
@@ -153,7 +165,7 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, accounts)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func (server *Server) deleteAccount(ctx *gin.Context) {
