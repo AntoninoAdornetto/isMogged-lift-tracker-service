@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/AntoninoAdornetto/lift_tracker/db/mock"
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
 	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
@@ -23,10 +25,11 @@ func TestCreateLift(t *testing.T) {
 	lift := generateRandLift()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -36,6 +39,9 @@ func TestCreateLift(t *testing.T) {
 				"reps":          lift.Reps,
 				"user_id":       lift.UserID,
 				"workout_id":    lift.WorkoutID,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateLiftParams{
@@ -55,6 +61,9 @@ func TestCreateLift(t *testing.T) {
 		{
 			name: "BadRequest",
 			body: gin.H{},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateLiftParams{
 					ExerciseName: lift.ExerciseName,
@@ -78,6 +87,9 @@ func TestCreateLift(t *testing.T) {
 				"user_id":       lift.UserID,
 				"workout_id":    lift.WorkoutID,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.CreateLiftParams{
 					ExerciseName: lift.ExerciseName,
@@ -90,6 +102,31 @@ func TestCreateLift(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"exercise_name": lift.ExerciseName,
+				"weight":        lift.WeightLifted,
+				"reps":          lift.Reps,
+				"user_id":       lift.UserID,
+				"workout_id":    lift.WorkoutID,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.CreateLiftParams{
+					ExerciseName: lift.ExerciseName,
+					WeightLifted: lift.WeightLifted,
+					Reps:         lift.Reps,
+					UserID:       lift.UserID,
+					WorkoutID:    lift.WorkoutID,
+				}
+				store.EXPECT().CreateLift(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -113,6 +150,7 @@ func TestCreateLift(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -123,10 +161,11 @@ func TestCreateLifts(t *testing.T) {
 	args, lifts := generateCompleteWorkoutLifts()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -134,6 +173,9 @@ func TestCreateLifts(t *testing.T) {
 				"exercise_name": args.Exercisenames,
 				"weight":        args.Weights,
 				"reps":          args.Reps,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateLifts(gomock.Any(), gomock.Eq(args)).Times(1).Return(lifts, nil)
@@ -146,6 +188,9 @@ func TestCreateLifts(t *testing.T) {
 		{
 			name: "BadRequest",
 			body: gin.H{},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateLifts(gomock.Any(), gomock.Any()).Times(0).Return([]db.Lift{}, sql.ErrConnDone)
 			},
@@ -160,11 +205,30 @@ func TestCreateLifts(t *testing.T) {
 				"weight":        args.Weights,
 				"reps":          args.Reps,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateLifts(gomock.Any(), gomock.Eq(args)).Times(1).Return([]db.Lift{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"exercise_name": args.Exercisenames,
+				"weight":        args.Weights,
+				"reps":          args.Reps,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateLifts(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -188,6 +252,7 @@ func TestCreateLifts(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -198,12 +263,16 @@ func TestGetLift(t *testing.T) {
 	lift := generateRandLift()
 
 	testCases := []struct {
-		name       string
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.GetLiftParams{
 					UserID: lift.UserID,
@@ -218,6 +287,9 @@ func TestGetLift(t *testing.T) {
 		},
 		{
 			name: "InternalError",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.GetLiftParams{
 					UserID: lift.UserID,
@@ -227,6 +299,21 @@ func TestGetLift(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.GetLiftParams{
+					UserID: lift.UserID,
+					ID:     lift.ID,
+				}
+				store.EXPECT().GetLift(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -247,6 +334,7 @@ func TestGetLift(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -262,16 +350,20 @@ func TestListLifts(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
 			query: Query{
 				PageSize: 5,
 				PageID:   1,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.ListLiftsParams{
@@ -292,6 +384,9 @@ func TestListLifts(t *testing.T) {
 				PageID:   -1,
 				PageSize: 100000,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListLifts(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -305,6 +400,9 @@ func TestListLifts(t *testing.T) {
 				PageSize: 5,
 				PageID:   1,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.ListLiftsParams{
 					Limit:  5,
@@ -315,6 +413,26 @@ func TestListLifts(t *testing.T) {
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			query: Query{
+				PageSize: 5,
+				PageID:   1,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.ListLiftsParams{
+					Limit:  5,
+					Offset: 0,
+					UserID: lifts[0].UserID,
+				}
+				store.EXPECT().ListLifts(gomock.Any(), gomock.Eq(args)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -340,6 +458,7 @@ func TestListLifts(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -357,10 +476,11 @@ func TestListPrs(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -369,6 +489,9 @@ func TestListPrs(t *testing.T) {
 				PageID:   1,
 				OrderBY:  "weight",
 				UserID:   lifts[0].UserID,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRs(gomock.Any(), gomock.Any()).Times(1).Return(lifts, nil)
@@ -386,6 +509,9 @@ func TestListPrs(t *testing.T) {
 				OrderBY:  "weight",
 				UserID:   lifts[0].UserID,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRs(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -401,11 +527,31 @@ func TestListPrs(t *testing.T) {
 				OrderBY:  "weight",
 				UserID:   lifts[0].UserID,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRs(gomock.Any(), gomock.Any()).Times(1).Return([]db.Lift{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			query: Query{
+				PageID:   1,
+				PageSize: 5,
+				OrderBY:  "weight",
+				UserID:   lifts[0].UserID,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListPRs(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -431,6 +577,7 @@ func TestListPrs(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -449,10 +596,11 @@ func TestListPRsByExercise(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -462,6 +610,9 @@ func TestListPRsByExercise(t *testing.T) {
 				ExerciseName: lifts[0].ExerciseName,
 				UserID:       lifts[0].UserID,
 				OrderBy:      "weight",
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRsByExercise(gomock.Any(), gomock.Any()).Times(1).Return(lifts, nil)
@@ -480,11 +631,32 @@ func TestListPRsByExercise(t *testing.T) {
 				UserID:       lifts[0].UserID,
 				OrderBy:      "weight",
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRsByExercise(gomock.Any(), gomock.Any()).Times(1).Return([]db.Lift{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			query: Query{
+				PageSize:     5,
+				PageID:       1,
+				ExerciseName: lifts[0].ExerciseName,
+				UserID:       lifts[0].UserID,
+				OrderBy:      "weight",
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListPRsByExercise(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -510,6 +682,7 @@ func TestListPRsByExercise(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -539,10 +712,11 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		query      Query
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		query         Query
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -552,6 +726,9 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 				MuscleGroup: "Chest",
 				UserID:      userId,
 				OrderBy:     "weight",
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRsByMuscleGroup(gomock.Any(), gomock.Any()).Times(1).Return(lifts, nil)
@@ -569,11 +746,32 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 				UserID:      userId,
 				OrderBy:     "weight",
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListPRsByMuscleGroup(gomock.Any(), gomock.Any()).Times(1).Return([]db.ListPRsByMuscleGroupRow{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			query: Query{
+				PageSize:    5,
+				PageID:      1,
+				MuscleGroup: "Chest",
+				UserID:      userId,
+				OrderBy:     "weight",
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListPRsByMuscleGroup(gomock.Any(), gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -599,6 +797,7 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 			qParams.Add("page_size", fmt.Sprintf("%d", tc.query.PageSize))
 			req.URL.RawQuery = qParams.Encode()
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -615,17 +814,21 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 // 	}
 
 // 	testCases := []struct {
-// 		name       string
-// 		query      Query
-// 		body       gin.H
-// 		buildStubs func(store *mockdb.MockStore)
-// 		checkRes   func(recorder *httptest.ResponseRecorder)
+// 		name          string
+// 		query         Query
+// 		body          gin.H
+// 		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+// 		buildStubs    func(store *mockdb.MockStore)
+// 		checkRes      func(recorder *httptest.ResponseRecorder)
 // 	}{
 // 		{
 // 			name: "OK",
 // 			body: gin.H{
 // 				"weight_lifted": "20.5",
 // 				"reps":          "10",
+// 			},
+// 			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+// 				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 // 			},
 // 			buildStubs: func(store *mockdb.MockStore) {
 // 				args := db.UpdateLiftParams{
@@ -650,13 +853,14 @@ func TestListPRsByMuscleGroup(t *testing.T) {
 // 			store := mockdb.NewMockStore(ctrl)
 // 			tc.buildStubs(store)
 
-// 			server := NewServer(store)
+// 			server := newTestServer(t, store)
 // 			recorder := httptest.NewRecorder()
 
 // 			url := fmt.Sprintf("/lift/%s", lift.ID)
 // 			req, err := http.NewRequest(http.MethodPatch, url, nil)
 // 			require.NoError(t, err)
 
+// 			tc.configureAuth(t, req, server.tokenCreator)
 // 			server.router.ServeHTTP(recorder, req)
 // 			tc.checkRes(recorder)
 // 		})
@@ -667,19 +871,35 @@ func TestDeleteLift(t *testing.T) {
 	lift := generateRandLift()
 
 	testCases := []struct {
-		name       string
-		liftID     uuid.UUID
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		liftID        uuid.UUID
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:   "OK-Deleted",
 			liftID: lift.ID,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteLift(gomock.Any(), gomock.Eq(lift.ID)).Times(1).Return(nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNoContent, recorder.Code)
+			},
+		},
+		{
+			name:   "Unauthorized",
+			liftID: lift.ID,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().DeleteLift(gomock.Any(), gomock.Eq(lift.ID)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -700,6 +920,7 @@ func TestDeleteLift(t *testing.T) {
 			req, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
