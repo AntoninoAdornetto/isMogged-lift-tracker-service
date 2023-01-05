@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	mockdb "github.com/AntoninoAdornetto/lift_tracker/db/mock"
 	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	"github.com/AntoninoAdornetto/lift_tracker/token"
 	"github.com/AntoninoAdornetto/lift_tracker/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,15 +25,19 @@ func TestCreateMuscleGroup(t *testing.T) {
 	muscleGroup := generateRandMuscleGroup()
 
 	testCases := []struct {
-		name       string
-		body       gin.H
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		body          gin.H
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
 			body: gin.H{
 				"name": muscleGroup.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
@@ -44,11 +51,28 @@ func TestCreateMuscleGroup(t *testing.T) {
 			body: gin.H{
 				"name": muscleGroup.Name,
 			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(db.MuscleGroup{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			body: gin.H{
+				"name": muscleGroup.Name,
+			},
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().CreateMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -72,6 +96,7 @@ func TestCreateMuscleGroup(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 
@@ -83,14 +108,18 @@ func TestGetMuscleGroup(t *testing.T) {
 	muscleGroup := generateRandMuscleGroup()
 
 	testCases := []struct {
-		name        string
-		muscleGroup string
-		buildStubs  func(store *mockdb.MockStore)
-		checkRes    func(recorder *httptest.ResponseRecorder)
+		name          string
+		muscleGroup   string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:        "OK",
 			muscleGroup: muscleGroup.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
 			},
@@ -101,6 +130,9 @@ func TestGetMuscleGroup(t *testing.T) {
 		{
 			name:        "InternalError",
 			muscleGroup: muscleGroup.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetMuscleGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(db.MuscleGroup{}, sql.ErrConnDone)
 			},
@@ -126,6 +158,7 @@ func TestGetMuscleGroup(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -136,12 +169,16 @@ func TestListMuscleGroups(t *testing.T) {
 	muscleGroups := generateRandMuscleGroups()
 
 	testCases := []struct {
-		name       string
-		buildStubs func(store *mockdb.MockStore)
-		checkRes   func(recorder *httptest.ResponseRecorder)
+		name          string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetMuscleGroups(gomock.Any()).Times(1).Return(muscleGroups, nil)
 			},
@@ -152,11 +189,25 @@ func TestListMuscleGroups(t *testing.T) {
 		},
 		{
 			name: "InternalError",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetMuscleGroups(gomock.Any()).Times(1).Return([]db.MuscleGroup{}, sql.ErrConnDone)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "Unauthorized",
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetMuscleGroups(gomock.Any()).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -177,6 +228,7 @@ func TestListMuscleGroups(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
@@ -187,20 +239,36 @@ func TestDeleteMuscleGroup(t *testing.T) {
 	muscleGroup := generateRandMuscleGroup()
 
 	testCases := []struct {
-		name        string
-		muscleGroup string
-		buildStubs  func(store *mockdb.MockStore)
-		checkRes    func(recorder *httptest.ResponseRecorder)
+		name          string
+		muscleGroup   string
+		configureAuth func(t *testing.T, request *http.Request, tokenCreator token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkRes      func(recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:        "OK",
 			muscleGroup: muscleGroup.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+				addAuthHeader(t, request, tokenCreator, bearerType, uuid.New(), time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(1).Return(muscleGroup, nil)
 			},
 			checkRes: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 				validateMuscleGroupResponse(t, recorder.Body, muscleGroup)
+			},
+		},
+		{
+			name:        "Unauthorized",
+			muscleGroup: muscleGroup.Name,
+			configureAuth: func(t *testing.T, request *http.Request, tokenCreator token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().DeleteGroup(gomock.Any(), gomock.Eq(muscleGroup.Name)).Times(0)
+			},
+			checkRes: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -221,6 +289,7 @@ func TestDeleteMuscleGroup(t *testing.T) {
 			req, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			tc.configureAuth(t, req, server.tokenCreator)
 			server.router.ServeHTTP(recorder, req)
 			tc.checkRes(recorder)
 		})
