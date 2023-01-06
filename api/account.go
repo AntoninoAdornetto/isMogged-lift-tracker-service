@@ -8,12 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
-	"github.com/AntoninoAdornetto/lift_tracker/token"
-	"github.com/AntoninoAdornetto/lift_tracker/util"
+	db "github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/token"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type createAccountReq struct {

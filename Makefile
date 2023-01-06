@@ -38,7 +38,7 @@ run-dev:
 	go run main.go
 
 stub:
-	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/lift_tracker/db/sqlc Store
+	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc Store
 
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev stub migratedown_single migrateup_single
 

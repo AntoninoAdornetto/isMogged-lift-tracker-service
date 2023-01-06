@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
-	"github.com/AntoninoAdornetto/lift_tracker/util"
+	db "github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/util"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

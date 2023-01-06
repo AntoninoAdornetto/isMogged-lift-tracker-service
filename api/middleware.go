@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AntoninoAdornetto/lift_tracker/token"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/token"
 	"github.com/gin-gonic/gin"
 )
 

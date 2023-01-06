@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AntoninoAdornetto/lift_tracker/util"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/util"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/AntoninoAdornetto/lift_tracker/api"
-	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
-	"github.com/AntoninoAdornetto/lift_tracker/util"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/api"
+	db "github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/util"
 	_ "github.com/lib/pq"
 )
 
