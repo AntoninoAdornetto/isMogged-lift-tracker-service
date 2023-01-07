@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=tempPassword
+      - POSTGRES_DB=lift_tracker
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    environment:
+      - DB_SOURCE=postgresql://postgres:tempPassword@postgres:5432/lift_tracker?sslmode=disable
+    depends_on:
+      - postgres
+    entrypoint: ['/app/wait-for.sh', 'postgres:5432', '--', '/app/start.sh']
+    command: ['/app/main']

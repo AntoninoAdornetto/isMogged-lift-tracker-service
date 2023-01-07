@@ -1,5 +1,5 @@
 postgres:
-	docker run --name postgres12 -e POSTGRES_PASSWORD=tempPassword -d -p 5432:5432 postgres 
+	docker run --name postgres12 --network mog-network -e POSTGRES_PASSWORD=tempPassword -d -p 5432:5432 postgres 
 
 createdb:
 	docker exec -it postgres12 createdb --username=postgres --owner=postgres lift_tracker
@@ -38,7 +38,7 @@ run-dev:
 	go run main.go
 
 stub:
-	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/lift_tracker/db/sqlc Store
+	mockgen -package mockdb -destination db/mock/store.go github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc Store
 
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc pgshell run-dev stub migratedown_single migrateup_single
 

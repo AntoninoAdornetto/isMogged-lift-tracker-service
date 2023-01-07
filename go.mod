@@ -1,4 +1,4 @@
-module github.com/AntoninoAdornetto/lift_tracker
+module github.com/AntoninoAdornetto/isMogged-lift-tracker-service
 
 go 1.18
 

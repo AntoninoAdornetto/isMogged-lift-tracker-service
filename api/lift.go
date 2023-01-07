@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	db "github.com/AntoninoAdornetto/lift_tracker/db/sqlc"
+	db "github.com/AntoninoAdornetto/isMogged-lift-tracker-service/db/sqlc"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

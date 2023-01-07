@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AntoninoAdornetto/lift_tracker/util"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/util"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

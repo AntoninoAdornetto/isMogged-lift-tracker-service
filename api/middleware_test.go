@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AntoninoAdornetto/lift_tracker/token"
+	"github.com/AntoninoAdornetto/isMogged-lift-tracker-service/token"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
