@@ -2,22 +2,21 @@ postgres:
 	docker run --name postgres12 --network mog-network -e POSTGRES_PASSWORD=tempPassword -d -p 5432:5432 postgres 
 
 createdb:
-	docker exec -it postgres12 createdb --username=postgres --owner=postgres lift_tracker
+	docker exec -it postgres12 createdb --username=postgres --owner=postgres ismogged
 
 dropdb:
-	docker exec -it postgres12 dropdb --username=postgres lift_tracker
+	docker exec -it postgres12 dropdb --username=postgres ismogged
 
 migrateup:
-	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose up
-
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose up
 migrateup_single:
-	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose up 1
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose down
 
 migratedown_single:
-	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/lift_tracker?sslmode=disable" -verbose down 1
+	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose down 1
 
 sqlc:
 	docker run --rm -v $(shell pwd):/src -w /src kjconroy/sqlc generate
