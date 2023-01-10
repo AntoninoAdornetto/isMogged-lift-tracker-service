@@ -8,9 +8,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=tempPassword
-      - POSTGRES_DB=lift_tracker
+      - POSTGRES_DB=ismogged
     healthcheck:
-      test: 'pg_isready -U postgres -d lift_tracker'
+      test: 'pg_isready -U postgres -d ismogged'
       interval: 10s
       timeout: 3s
       retries: 5
@@ -21,7 +21,7 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - DB_SOURCE=postgresql://postgres:tempPassword@postgres:5432/lift_tracker?sslmode=disable
+      - DB_SOURCE=postgresql://postgres:tempPassword@postgres:5432/ismogged?sslmode=disable
     depends_on:
       - postgres
     entrypoint: ['/app/wait-for.sh', 'postgres:5432', '--', '/app/start.sh']
