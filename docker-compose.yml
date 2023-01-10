@@ -1,11 +1,19 @@
-version: '3.9'
+version: '3.8'
 services:
   postgres:
     image: postgres:12-alpine
+    restart: always
+    ports:
+      - '5432:5432'
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=tempPassword
       - POSTGRES_DB=lift_tracker
+    healthcheck:
+      test: 'pg_isready -U postgres -d lift_tracker'
+      interval: 10s
+      timeout: 3s
+      retries: 5
   api:
     build:
       context: .
