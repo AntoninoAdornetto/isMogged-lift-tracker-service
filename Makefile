@@ -9,6 +9,7 @@ dropdb:
 
 migrateup:
 	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose up
+
 migrateup_single:
 	migrate -path db/migration -database "postgresql://postgres:tempPassword@localhost:5432/ismogged?sslmode=disable" -verbose up 1
 
